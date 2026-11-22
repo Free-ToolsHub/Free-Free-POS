@@ -1,0 +1,1603 @@
+<!doctype html>
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Free Free POS!</title> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> 
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> 
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    </head> 
+<body class="light-mode"> 
+  <datalist id="year-suggestions-list"></datalist>
+
+  <header class="akmheader"> 
+   <button class="akmmenu-toggle"><i class="fas fa-bars"></i></button> 
+   <div class="akmlogo">
+    <span style="font-size: 1.25rem; font-weight: bold;"> Free Free POS!</span> 
+   </div> 
+   <div class="akmheader-actions"> 
+    <button type="button" class="akmsync-header-badge" id="header-sync-badge" title="Wi-Fi QR P2P Sync">
+        <span class="akmsync-dot offline" id="header-sync-dot"></span>
+        <i class="fas fa-wifi"></i>
+        <span id="header-sync-label">Standalone</span>
+    </button>
+   </div> 
+  </header> 
+
+  <div class="akmapp-container"> 
+   <aside class="akmsidebar"> 
+    <ul class="akmsidebar-menu"> 
+     <li class="akmmenu-title" data-translate="menu_main">Main</li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link active" data-section="home"><i class="fas fa-home"></i><span data-translate="menu_home">Home</span></a></li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="user-guide"><i class="fas fa-book-open"></i><span data-translate="menu_user_guide">User Guide</span></a></li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="daily-review"><i class="fas fa-chart-line"></i><span data-translate="menu_daily_review">Daily Review</span></a></li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="orders"><i class="fas fa-cash-register"></i><span data-translate="menu_new_sale">New Sale</span></a></li> 
+     
+     <li class="akmmenu-title" data-translate="menu_management">Management</li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="products"><i class="fas fa-box-open"></i><span data-translate="menu_products">Products</span></a></li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="categories"><i class="fas fa-tags"></i><span data-translate="menu_categories">Categories</span></a></li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="stock"><i class="fas fa-warehouse"></i><span data-translate="menu_stock">Stock</span></a></li> 
+     <li class="akmmenu-item" id="expiring-soon-menu-item" style="display: none;"><a href="#" class="akmmenu-link" data-section="expiring-soon"><i class="fas fa-hourglass-half"></i><span data-translate="menu_expiring_soon">Expiring Soon</span></a></li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="purchases"><i class="fas fa-truck-loading"></i><span data-translate="menu_purchases">Purchases</span></a></li> 
+     
+     <li class="akmmenu-title" data-translate="menu_addons">Add-ons</li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="todo"><i class="fas fa-tasks"></i><span data-translate="menu_todo">To Do List</span></a></li>
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="household-budget"><i class="fas fa-wallet"></i><span data-translate="menu_household">Household Budget</span></a></li>
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="hr-management"><i class="fas fa-user-tie"></i><span data-translate="menu_hr">HR Management</span></a></li>
+
+     <li class="akmmenu-title" data-translate="menu_reports">Reports</li> 
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="sale-history"><i class="fas fa-history"></i><span data-translate="menu_sale_history">Sale History</span></a></li>
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="reports"><i class="fas fa-chart-bar"></i><span data-translate="menu_reports_link">Reports</span></a></li> 
+     
+     <li class="akmmenu-title" data-translate="menu_settings">Setting</li>
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="settings"><i class="fas fa-cog"></i><span data-translate="menu_settings">Settings</span></a></li>
+     <li class="akmmenu-item"><a href="#" class="akmmenu-link" data-section="about"><i class="fas fa-info-circle"></i><span data-translate="menu_about">About</span></a></li> 
+    </ul> 
+   </aside> 
+
+   <main class="akmmain-content"> 
+    <section id="home-section" class="content-section">
+        <div class="home-date-box">
+            <i class="far fa-calendar-alt"></i> <span id="home-current-date">-</span>
+        </div>
+
+        <div class="home-guide-top-wrap">
+            <button type="button" class="home-guide-top-btn" onclick="navigateTo('user-guide')">
+                <div class="home-guide-top-left">
+                    <div class="home-guide-top-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <div>
+                        <span class="home-guide-top-title" data-translate="menu_user_guide">အသုံးပြုနည်းလမ်းညွှန်</span>
+                        <span class="home-guide-top-sub" data-translate="guide_quick_sub">စတင်အသုံးပြုသူများအတွက် Demo Data ဖျက်နည်းနှင့် စနစ်တစ်ခုလုံး အသုံးပြုနည်း အသေးစိတ်</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right" style="color: var(--primary-color); font-size: 1.1rem;"></i>
+            </button>
+        </div>
+
+        <div class="home-quick-actions" id="main-quick-actions">
+            <div class="home-action-btn" data-target-section="daily-review">
+                <i class="fas fa-chart-line"></i>
+                <span data-translate="menu_daily_review">Daily Review</span>
+            </div>
+            <div class="home-action-btn" data-target-section="orders">
+                <i class="fas fa-cash-register"></i>
+                <span data-translate="menu_new_sale">New Sale</span>
+            </div>
+            <div class="home-action-btn" data-target-section="products">
+                <i class="fas fa-box-open"></i>
+                <span data-translate="menu_products">Products</span>
+            </div>
+            <div class="home-action-btn" data-target-section="categories">
+                <i class="fas fa-tags"></i>
+                <span data-translate="menu_categories">Categories</span>
+            </div>
+            <div class="home-action-btn" data-target-section="stock">
+                <i class="fas fa-warehouse"></i>
+                <span data-translate="menu_stock">Stock</span>
+            </div>
+            <div class="home-action-btn" id="home-expiring-soon-btn" data-target-section="expiring-soon" style="display: none;">
+                <i class="fas fa-hourglass-half"></i>
+                <span data-translate="menu_expiring_soon">Expiring Soon</span>
+            </div>
+            <div class="home-action-btn" data-target-section="purchases">
+                <i class="fas fa-truck-loading"></i>
+                <span data-translate="menu_purchases">Purchases</span>
+            </div>
+            
+            <div class="home-action-btn" data-target-section="todo">
+                <i class="fas fa-tasks" style="color: #0284c7 !important;"></i>
+                <span data-translate="menu_todo">To Do</span>
+            </div>
+            
+            <div class="home-action-btn" data-target-section="household-budget">
+                <i class="fas fa-wallet" style="color: #31A24C !important;"></i>
+                <span data-translate="menu_household">Household</span>
+            </div>
+            <div class="home-action-btn" data-target-section="hr-management">
+                <i class="fas fa-user-tie" style="color: #1877F2 !important;"></i>
+                <span data-translate="menu_hr">HR</span>
+            </div>
+            
+            <div class="home-action-btn" data-target-section="sale-history">
+                <i class="fas fa-history"></i>
+                <span data-translate="menu_sale_history">History</span>
+            </div>
+            <div class="home-action-btn" data-target-section="reports">
+                <i class="fas fa-chart-bar"></i>
+                <span data-translate="menu_reports">Reports</span>
+            </div>
+            <div class="home-action-btn" data-target-section="settings">
+                <i class="fas fa-cog"></i>
+                <span data-translate="menu_settings">Settings</span>
+            </div>
+            <div class="home-action-btn" data-target-section="about">
+                <i class="fas fa-info-circle"></i>
+                <span data-translate="menu_about">About</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="user-guide-section" class="content-section" style="display: none;">
+        <div class="akmcard guide-shell">
+            <div class="akmcard-header">
+                <h2 class="akmcard-title">
+                    <i class="fas fa-book-open" style="color: var(--primary-color); margin-right: 8px;"></i>
+                    <span data-translate="menu_user_guide">အသုံးပြုနည်းလမ်းညွှန်</span>
+                </h2>
+                <button type="button" class="akmbtn akmbtn-sm akmbtn-outline-primary" onclick="navigateTo('home')">
+                    <i class="fas fa-home"></i> <span data-translate="menu_home">Home</span>
+                </button>
+            </div>
+            <div class="akmcard-body" id="user-guide-content"></div>
+        </div>
+    </section>
+
+    <section id="daily-review-section" class="content-section" style="display: none;">
+        <h3 style="margin: 0 0 15px 0; color: var(--text-emphasis); font-size: 1.2rem;" data-translate="home_overview">Business Overview</h3>
+        <div class="akmstats-grid">
+            <div class="akmstat-card">
+                <div class="home-stat-icon icon-sales"><i class="fas fa-coins"></i></div>
+                <span class="akmstat-title" data-translate="home_today_sales">Today's Sales</span>
+                <span class="akmstat-value" id="home-today-sales">0 ကျပ်</span>
+            </div>
+            <div class="akmstat-card">
+                <div class="home-stat-icon icon-orders"><i class="fas fa-receipt"></i></div>
+                <span class="akmstat-title" data-translate="home_today_orders">Today's Orders</span>
+                <span class="akmstat-value" id="home-today-orders">0</span>
+            </div>
+            <div class="akmstat-card">
+                <div class="home-stat-icon icon-products"><i class="fas fa-boxes"></i></div>
+                <span class="akmstat-title" data-translate="home_total_products">Total Products</span>
+                <span class="akmstat-value" id="home-total-products">0</span>
+            </div>
+            <div class="akmstat-card">
+                <div class="home-stat-icon icon-stock"><i class="fas fa-exclamation-triangle"></i></div>
+                <span class="akmstat-title" data-translate="home_low_stock_items">Low Stock Items</span>
+                <span class="akmstat-value" id="home-low-stock">0</span>
+            </div>
+        </div>
+
+        <div class="akmcard">
+            <div class="akmcard-header">
+                <h3 class="akmcard-title" data-translate="home_recent_sales">Recent Sales</h3>
+                <button class="akmbtn akmbtn-sm akmbtn-outline-primary" onclick="navigateTo('sale-history')" data-translate="btn_view_all">View All</button>
+            </div>
+            <div class="akmtable-responsive">
+                <table class="akmtable">
+                    <thead>
+                        <tr>
+                            <th data-translate="table_sale_id">Sale ID</th>
+                            <th data-translate="table_date">Date</th>
+                            <th data-translate="table_total">Total</th>
+                            <th data-translate="label_payment_method">Payment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="home-recent-sales-table">
+                        <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="orders-section" class="content-section" style="display: none;"> 
+     <div class="akmrow"> 
+      <div class="akmcol-md-8 akmcol-sm-12"> 
+       <div class="akmcard"> 
+        <div class="akmcard-header"> 
+         <h3 class="akmcard-title" style="font-size: 1rem;" data-translate="orders_add_items">Add Items</h3> 
+         <div class="akmsearch-wrapper">
+          <div class="akmsearch-box"> <i class="fas fa-search"></i> 
+           <input type="text" id="product-search" data-translate-placeholder="placeholder_search_products"> 
+           <button type="button" class="barcode-scan-btn" onclick="startScanner('product-search')" title="Scan Barcode / QR">
+               <i class="fas fa-barcode"></i>
+               <span data-translate="btn_scan_short">Scan</span>
+           </button>
+          </div>
+          <small class="akm-barcode-hint">
+              <i class="fas fa-qrcode"></i>
+              <span data-translate="hint_barcode_scan_sale">Barcode / QR ဖတ်၍ ပစ္စည်းထည့်နိုင်ပါသည်</span>
+          </small>
+         </div> 
+        </div> 
+        <div class="akmcategory-tabs" id="category-tabs"></div> 
+        <div id="products-grid" class="akmproducts-grid"> 
+         <div class="akmempty-state"> <i class="fas fa-chair"></i> 
+          <p data-translate="empty_select_table">Select an item to begin</p> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="akmcol-md-4 akmcol-sm-12"> 
+       <div class="akmcard akmorder-details"> 
+        <div class="akmorder-header"> 
+         <h3><span data-translate="label_sale">Sale</span> #<span id="current-order-id">-</span></h3> 
+         <div class="akmbtn-group"> 
+             <button class="akmbtn akmbtn-success" type="button" id="complete-order-btn" disabled><i class="fas fa-check"></i> <span data-translate="btn_complete">Complete</span></button> 
+             <button type="button" class="akmbtn akmbtn-danger" id="cancel-order-btn" disabled><i class="fas fa-times"></i> <span data-translate="btn_cancel">Cancel</span></button> 
+         </div> 
+        </div> 
+        <div class="akmorder-items akmtable-responsive"> 
+         <table class="akmtable"> 
+          <thead> 
+           <tr> 
+            <th data-translate="table_item">Item</th> 
+            <th data-translate="table_qty">Qty</th> 
+            <th data-translate="table_price">Price</th> 
+            <th data-translate="table_total">Total</th> 
+           </tr> 
+          </thead> 
+          <tbody id="order-items-list"> 
+           <tr> 
+            <td colspan="4"> 
+             <div class="akmempty-state" style="min-height: 50px; padding: 10px;"> 
+              <p style="font-size: 0.8rem; margin: 0;" data-translate="empty_no_items_added">No items added</p> 
+             </div> </td> 
+           </tr> 
+          </tbody> 
+         </table> 
+        </div> 
+        <div class="akmorder-summary"> 
+         <div class="akmsummary-row"> <span class="akmsummary-label" data-translate="label_subtotal">Subtotal:</span> <span class="akmsummary-value" id="order-subtotal">0 ကျပ်</span> </div> 
+         <div class="akmsummary-row"> 
+            <span class="akmsummary-label" data-translate="label_discount">Discount:</span> 
+            <input type="number" id="order-discount" class="akmdiscount-input" placeholder="0" min="0">
+         </div>
+         <div class="akmsummary-row"> <span class="akmsummary-label" id="order-tax-label">Tax (0%):</span> <span class="akmsummary-value" id="order-tax">0 ကျပ်</span> </div> 
+         <div class="akmsummary-row">
+            <span class="akmsummary-label" data-translate="label_payment_method">Payment Method:</span>
+            <select id="order-payment-method" class="akmform-control" style="width: auto; padding: 4px 28px 4px 8px; font-size: 0.85rem;">
+                <option value="Cash">Cash</option>
+                <option value="KBZ Pay">KBZ Pay</option>
+            </select>
+         </div>
+         <div class="akmsummary-row akmgrand-total"> <span class="akmsummary-label" data-translate="label_grand_total">Grand Total:</span> <span class="akmsummary-value" id="order-total">0 ကျပ်</span> </div> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </section> 
+
+    <section id="products-section" class="content-section" style="display: none;"> 
+     <div class="akmcard"> 
+      <div class="akmcard-header"> 
+       <h2 class="akmcard-title" data-translate="menu_products">Products</h2> 
+       <div class="akmbtn-group"> <button class="akmbtn akmbtn-primary" type="button" id="add-new-product-btn"><i class="fas fa-plus"></i> <span data-translate="btn_add_product">Add Product</span></button> </div> 
+      </div> 
+      <div class="akmfilter-controls"> 
+       <div class="akmsearch-box"> <i class="fas fa-search"></i> 
+        <input type="text" id="products-search-input" data-translate-placeholder="placeholder_search_products"> 
+       </div> 
+       <select id="product-category-filter" class="akmform-control"> <option value="all" data-translate="filter_all_categories">All Categories</option> </select> 
+      </div> 
+      <div class="akmtable-responsive"> 
+       <table class="akmtable"> 
+        <thead> 
+         <tr> 
+          <th data-translate="table_image">Image</th> 
+          <th data-translate="table_name">Name</th> 
+          <th data-translate="table_category">Category</th> 
+          <th data-translate="table_price">Price</th> 
+          <th data-translate="table_actions">Actions</th> 
+         </tr> 
+        </thead> 
+        <tbody id="products-table"></tbody> 
+       </table> 
+      </div> 
+      <div class="akmpagination-controls" id="products-pagination" style="display: none;"> 
+       <button class="akmbtn akmbtn-secondary" id="prev-page-btn" disabled><i class="fas fa-chevron-left"></i></button> 
+       <span id="pagination-info">Page 1 of 1</span> 
+       <button class="akmbtn akmbtn-secondary" id="next-page-btn" disabled><i class="fas fa-chevron-right"></i></button> 
+      </div> 
+     </div> 
+    </section> 
+
+    <section id="categories-section" class="content-section" style="display: none;"> 
+     <div class="akmcard"> 
+      <div class="akmcard-header"> 
+       <h2 class="akmcard-title" data-translate="menu_categories">Categories</h2> 
+       <div class="akmbtn-group"> <button class="akmbtn akmbtn-primary" type="button" id="add-new-category-btn"><i class="fas fa-plus"></i> <span data-translate="btn_add_category">Add Category</span></button> </div> 
+      </div> 
+      <div class="akmtable-responsive"> 
+       <table class="akmtable"> 
+        <thead> 
+         <tr> 
+          <th data-translate="table_name">Name</th> 
+          <th data-translate="table_product_count">Product Count</th> 
+          <th data-translate="table_actions">Actions</th> 
+         </tr> 
+        </thead> 
+        <tbody id="categories-table"></tbody> 
+       </table> 
+      </div> 
+      <div class="akmpagination-controls" id="categories-pagination" style="display: none;"> 
+       <button class="akmbtn akmbtn-secondary" id="prev-category-page-btn" disabled><i class="fas fa-chevron-left"></i></button> 
+       <span id="category-pagination-info">Page 1 of 1</span> 
+       <button class="akmbtn akmbtn-secondary" id="next-category-page-btn" disabled><i class="fas fa-chevron-right"></i></button> 
+      </div> 
+     </div> 
+    </section> 
+    
+    <section id="expiring-soon-section" class="content-section" style="display: none;">
+        <div class="akmcard">
+            <div class="akmcard-header">
+                <h2 class="akmcard-title" data-translate="title_expiring_soon_products">Expiring Soon Products</h2>
+            </div>
+            <div class="akmfilter-controls">
+                <div class="akmsearch-box"> <i class="fas fa-search"></i>
+                    <input type="text" id="expiring-soon-search-input" data-translate-placeholder="placeholder_search_products">
+                </div>
+                <select id="expiring-soon-category-filter" class="akmform-control">
+                    <option value="all" data-translate="filter_all_categories">All Categories</option>
+                </select>
+                <div class="akmform-group">
+                    <label for="expiring-days-filter" class="akmform-label" style="margin-bottom: 0;"><span data-translate="label_show_expiring_in">Show expiring in:</span></label>
+                    <input type="number" id="expiring-days-filter" class="akmform-control" value="7" min="1" style="width: 80px; padding: 8px;">
+                </div>
+            </div>
+            <div class="akmtable-responsive">
+                <table class="akmtable">
+                    <thead>
+                        <tr>
+                            <th data-translate="table_product_name">Product Name</th>
+                            <th data-translate="table_category">Category</th>
+                            <th data-translate="table_quantity">Quantity</th>
+                            <th data-translate="table_expiry_date">Expiry Date</th>
+                            <th data-translate="table_status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expiring-soon-table"></tbody>
+                </table>
+            </div>
+            <div class="akmpagination-controls" id="expiring-soon-pagination" style="display: none;">
+                <button class="akmbtn akmbtn-secondary" id="expiring-soon-prev-page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+                <span id="expiring-soon-pagination-info">Page 1 of 1</span>
+                <button class="akmbtn akmbtn-secondary" id="expiring-soon-next-page-btn" disabled><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <section id="purchases-section" class="content-section" style="display: none;"> 
+     <div class="akmcard"> 
+      <div class="akmcard-header"> 
+       <h2 class="akmcard-title" data-translate="menu_purchases">Purchases</h2> 
+       <div class="akmbtn-group">
+         <button class="akmbtn akmbtn-primary" type="button" id="add-new-purchase-btn"><i class="fas fa-plus"></i> <span data-translate="btn_add_purchase">Add Purchase</span></button> 
+         <button class="akmbtn akmbtn-success" type="button" id="export-purchases-csv-btn"><i class="fas fa-file-csv"></i> CSV</button> 
+         <button class="akmbtn akmbtn-danger" type="button" id="export-purchases-pdf-btn"><i class="fas fa-file-pdf"></i> PDF</button> 
+       </div> 
+      </div> 
+      <div class="akmfilter-controls"> 
+       <div class="akmfilter-group"> <label data-translate="label_filter_by">Filter by:</label> 
+        <div id="purchase-filter-type"> 
+            <input type="radio" id="filter-all-purchases" name="purchase-filter-type" value="all"> <label for="filter-all-purchases" data-translate="filter_all">All</label> 
+            <input type="radio" id="filter-date-purchases" name="purchase-filter-type" value="date" checked> <label for="filter-date-purchases" data-translate="filter_by_date">By Date</label> 
+            <input type="radio" id="filter-month-purchases" name="purchase-filter-type" value="month"> <label for="filter-month-purchases" data-translate="filter_by_month">By Month</label> 
+        </div> 
+       </div> 
+       <div id="purchase-date-filter-group" class="akmfilter-group" style="display: flex;"> 
+        <label for="purchase-filter-date" data-translate="label_date">Date:</label> 
+        <input type="date" id="purchase-filter-date" class="akmform-control"> 
+       </div> 
+       <div id="purchase-month-filter-group" class="akmfilter-group" style="display: none;"> 
+        <label for="purchase-filter-month" data-translate="label_month">Month:</label> <select id="purchase-filter-month" class="akmform-control"></select> 
+        <label for="purchase-filter-year" data-translate="label_year">Year:</label> <input type="number" id="purchase-filter-year" class="akmform-control akmyear-input" list="year-suggestions-list" placeholder="Year"> 
+       </div> 
+       <div class="akmbtn-group"> 
+        <button class="akmbtn akmbtn-primary" id="apply-purchase-filter-btn" data-translate="btn_apply_filter">Apply Filter</button> 
+        <button class="akmbtn akmbtn-secondary" id="clear-purchase-filter-btn" data-translate="btn_clear_filter">Clear Filter</button> 
+       </div> 
+      </div> 
+      <div class="akmtable-responsive"> 
+       <table class="akmtable"> 
+        <thead> 
+         <tr> 
+          <th data-translate="table_product_name">Product Name</th> 
+          <th data-translate="table_supplier">Supplier</th> 
+          <th data-translate="table_quantity">Quantity</th> 
+          <th data-translate="table_unit_cost">Unit Cost</th> 
+          <th data-translate="table_total_cost">Total Cost</th> 
+          <th data-translate="table_date">Date</th> 
+          <th data-translate="table_actions">Actions</th> 
+         </tr> 
+        </thead> 
+        <tbody id="purchases-table"> 
+         <tr><td colspan="7"><div class="akmempty-state"><i class="fas fa-shopping-cart"></i><p data-translate="empty_no_purchases">No purchases found</p></div></td></tr> 
+        </tbody> 
+       </table> 
+      </div> 
+     </div> 
+    </section> 
+
+    <section id="stock-section" class="content-section" style="display: none;"> 
+     <div class="akmcard"> 
+      <div class="akmcard-header"> 
+       <h2 class="akmcard-title" data-translate="menu_stock">Stock Management</h2> 
+      </div> 
+      <div class="akmfilter-controls"> 
+       <div class="akmsearch-box"> <i class="fas fa-search"></i> 
+        <input type="text" id="stock-search-input" data-translate-placeholder="placeholder_search_stock"> 
+       </div> 
+       <select id="stock-category-filter" class="akmform-control"> <option value="all" data-translate="filter_all_categories">All Categories</option> </select> 
+       <div class="akmfilter-group">
+           <label><input type="checkbox" id="stock-low-filter"> <span data-translate="label_low_stock_only">Low Stock Only</span></label>
+       </div>
+      </div> 
+      <div class="akmtable-responsive"> 
+       <table class="akmtable"> 
+        <thead> 
+         <tr> 
+          <th data-translate="table_product">Product</th> 
+          <th data-translate="table_quantity">Quantity</th> 
+          <th data-translate="table_low_threshold">Low Threshold</th> 
+          <th data-translate="table_status">Status</th> 
+         </tr> 
+        </thead> 
+        <tbody id="stock-table"> 
+         <tr><td colspan="4"><div class="akmempty-state"><i class="fas fa-warehouse"></i><p data-translate="empty_no_stock">No stock records found</p></div></td></tr> 
+        </tbody> 
+       </table> 
+      </div> 
+      <div class="akmpagination-controls" id="stock-pagination" style="display: none;"> 
+          <button class="akmbtn akmbtn-secondary" id="stock-prev-page-btn" disabled><i class="fas fa-chevron-left"></i></button> 
+          <span id="stock-pagination-info">Page 1 of 1</span> 
+          <button class="akmbtn akmbtn-secondary" id="stock-next-page-btn" disabled><i class="fas fa-chevron-right"></i></button> 
+      </div>
+     </div> 
+    </section> 
+
+    <section id="sale-history-section" class="content-section" style="display: none;">
+        <div class="akmcard">
+            <div class="akmcard-header">
+                <h2 class="akmcard-title" data-translate="menu_sale_history">Sale History</h2>
+                <div class="akmbtn-group">
+                    <button class="akmbtn akmbtn-success" type="button" id="export-sales-csv-btn"><i class="fas fa-file-csv"></i> <span data-translate="btn_export_csv_short">CSV</span></button>
+                    <button class="akmbtn akmbtn-danger" type="button" id="export-sales-pdf-btn"><i class="fas fa-file-pdf"></i> <span data-translate="btn_export_pdf_short">PDF</span></button>
+                </div>
+            </div>
+            <div class="akmfilter-controls">
+                <div class="akmfilter-group">
+                    <label data-translate="label_filter_by">Filter by:</label>
+                    <div id="sale-history-filter-type">
+                        <input type="radio" id="filter-all-sales" name="sale-filter-type" value="all" checked>
+                        <label for="filter-all-sales" data-translate="filter_all">All</label>
+                        <input type="radio" id="filter-date-sales" name="sale-filter-type" value="date">
+                        <label for="filter-date-sales" data-translate="filter_by_date">By Date</label>
+                        <input type="radio" id="filter-month-sales" name="sale-filter-type" value="month">
+                        <label for="filter-month-sales" data-translate="filter_by_month">By Month</label>
+                    </div>
+                </div>
+                <div id="sale-history-date-filter-group" class="akmfilter-group" style="display: none;">
+                    <label for="sale-history-filter-date" data-translate="label_date">Date:</label>
+                    <input type="date" id="sale-history-filter-date" class="akmform-control">
+                </div>
+                <div id="sale-history-month-filter-group" class="akmfilter-group" style="display: none;">
+                    <label for="sale-history-filter-month" data-translate="label_month">Month:</label>
+                    <select id="sale-history-filter-month" class="akmform-control"></select>
+                    <label for="sale-history-filter-year" data-translate="label_year">Year:</label>
+                    <input type="number" id="sale-history-filter-year" class="akmform-control akmyear-input" list="year-suggestions-list" placeholder="Year">
+                </div>
+                <div class="akmbtn-group">
+                    <button class="akmbtn akmbtn-primary" id="apply-sale-history-filter-btn" data-translate="btn_apply_filter">Apply Filter</button>
+                    <button class="akmbtn akmbtn-secondary" id="clear-sale-history-filter-btn" data-translate="btn_clear_filter">Clear Filter</button>
+                </div>
+            </div>
+            <div class="akmtable-responsive">
+                <table class="akmtable">
+                    <thead>
+                        <tr>
+                            <th data-translate="table_sale_id">Sale ID</th>
+                            <th data-translate="table_date">Date</th>
+                            <th data-translate="table_items_count">Items</th>
+                            <th data-translate="label_payment_method">Payment</th>
+                            <th data-translate="label_discount">Discount</th>
+                            <th data-translate="table_total">Total</th>
+                            <th data-translate="table_actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sale-history-table"></tbody>
+                </table>
+            </div>
+            <div class="akmpagination-controls" id="sale-history-pagination" style="display: none;">
+                <button class="akmbtn akmbtn-secondary" id="sale-history-prev-page-btn" disabled><i class="fas fa-chevron-left"></i></button>
+                <span id="sale-history-pagination-info">Page 1 of 1</span>
+                <button class="akmbtn akmbtn-secondary" id="sale-history-next-page-btn" disabled><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </section>
+    
+    <section id="todo-section" class="content-section" style="display: none;">
+        <div class="akmcard todo-container-card">
+            <div class="akmcard-header">
+                <h2 class="akmcard-title"><i class="fas fa-tasks" style="color: var(--primary-color); margin-right: 8px;"></i><span data-translate="menu_todo">To Do List</span></h2>
+                <button class="akmbtn akmbtn-sm akmbtn-outline-primary" id="todo-enable-notif-btn" type="button" onclick="requestTodoReminderPermission()">
+                    <i class="fas fa-bell"></i> <span data-translate="todo_btn_reminder">Reminders</span>
+                </button>
+            </div>
+            <div class="akmcard-body">
+                <div id="todo-overdue-banner" class="todo-overdue-alert" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="todo-overdue-banner-text"></span>
+                </div>
+
+                <div class="todo-stats-bar">
+                    <div class="todo-stat-pill">
+                        <span class="todo-stat-pill-label" data-translate="filter_all">All</span>
+                        <span class="todo-stat-pill-val" id="todo-stat-all">0</span>
+                    </div>
+                    <div class="todo-stat-pill">
+                        <span class="todo-stat-pill-label" data-translate="todo_status_pending">Pending</span>
+                        <span class="todo-stat-pill-val" id="todo-stat-pending" style="color: var(--warning-color);">0</span>
+                    </div>
+                    <div class="todo-stat-pill">
+                        <span class="todo-stat-pill-label" data-translate="todo_status_completed">Completed</span>
+                        <span class="todo-stat-pill-val" id="todo-stat-completed" style="color: var(--success-color);">0</span>
+                    </div>
+                    <div class="todo-stat-pill">
+                        <span class="todo-stat-pill-label" data-translate="todo_overdue">Overdue</span>
+                        <span class="todo-stat-pill-val" id="todo-stat-overdue" style="color: var(--danger-color);">0</span>
+                    </div>
+                </div>
+
+                <div class="todo-add-panel">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <input type="text" id="new-todo-input" class="akmform-control" style="flex: 1; min-width: 200px;" data-translate-placeholder="todo_placeholder" placeholder="Add a new task...">
+                        <button class="akmbtn akmbtn-primary" type="button" onclick="addTodo()">
+                            <i class="fas fa-plus"></i> <span data-translate="btn_add">Add</span>
+                        </button>
+                    </div>
+                    <div class="todo-add-grid">
+                        <div>
+                            <label class="akmform-label" style="font-size: 0.78rem; margin-bottom: 4px;" data-translate="todo_label_category">Category</label>
+                            <select id="new-todo-category" class="akmform-control" style="padding: 7px 28px 7px 10px; font-size: 0.85rem;">
+                                <option value="shop" data-translate="todo_cat_shop">ဆိုင်အတွက် (Shop)</option>
+                                <option value="finance" data-translate="todo_cat_finance">ငွေစာရင်း (Finance)</option>
+                                <option value="inventory" data-translate="todo_cat_inventory">ကုန်ပစ္စည်း (Stock)</option>
+                                <option value="general" data-translate="todo_cat_general">အထွေထွေ (General)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="akmform-label" style="font-size: 0.78rem; margin-bottom: 4px;" data-translate="todo_label_priority">Priority</label>
+                            <select id="new-todo-priority" class="akmform-control" style="padding: 7px 28px 7px 10px; font-size: 0.85rem;">
+                                <option value="high" data-translate="todo_prio_high">High (အရေးကြီး)</option>
+                                <option value="medium" selected data-translate="todo_prio_medium">Medium (သာမန်)</option>
+                                <option value="low" data-translate="todo_prio_low">Low (နောက်မှ)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="akmform-label" style="font-size: 0.78rem; margin-bottom: 4px;" data-translate="todo_label_due_date">Due Date &amp; Time</label>
+                            <input type="datetime-local" id="new-todo-due" class="akmform-control" style="padding: 6px 10px; font-size: 0.82rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-toolbar">
+                    <div class="akmcategory-tabs" id="todo-status-tabs" style="margin-bottom: 0; padding-bottom: 0;">
+                        <button type="button" class="akmcategory-tab active" data-todo-filter="all" onclick="setTodoStatusFilter('all')" data-translate="filter_all">All</button>
+                        <button type="button" class="akmcategory-tab" data-todo-filter="pending" onclick="setTodoStatusFilter('pending')" data-translate="todo_status_pending">Pending</button>
+                        <button type="button" class="akmcategory-tab" data-todo-filter="completed" onclick="setTodoStatusFilter('completed')" data-translate="todo_status_completed">Completed</button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; flex: 1; min-width: 220px; justify-content: flex-end; flex-wrap: wrap;">
+                        <select id="todo-category-filter" class="akmform-control" style="width: auto; min-width: 140px; padding: 7px 28px 7px 10px; font-size: 0.84rem;" onchange="renderTodoPage()">
+                            <option value="all" data-translate="filter_all_categories">All Categories</option>
+                            <option value="shop" data-translate="todo_cat_shop">ဆိုင်အတွက် (Shop)</option>
+                            <option value="finance" data-translate="todo_cat_finance">ငွေစာရင်း (Finance)</option>
+                            <option value="inventory" data-translate="todo_cat_inventory">ကုန်ပစ္စည်း (Stock)</option>
+                            <option value="general" data-translate="todo_cat_general">အထွေထွေ (General)</option>
+                        </select>
+                        <div class="akmsearch-box" style="max-width: 240px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="todo-search-input" style="padding: 7px 10px 7px 32px; font-size: 0.85rem;" data-translate-placeholder="todo_search_placeholder" placeholder="Search tasks..." oninput="renderTodoPage()">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.75rem; color: var(--text-color); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; opacity: 0.85;">
+                    <i class="fas fa-grip-vertical"></i>
+                    <span data-translate="todo_drag_hint">Drag & drop tasks or use arrow buttons to reorder.</span>
+                </div>
+
+                <div id="todo-list-container" class="todo-list-wrapper"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="household-budget-section" class="content-section" style="display: none;">
+        <div class="akmstats-grid">
+            <div class="akmstat-card" style="border-left: 4px solid var(--success-color);">
+                <span class="akmstat-title" data-translate="hh_this_month_income">This Month Income</span>
+                <span class="akmstat-value" id="hh-income">0 ကျပ်</span>
+            </div>
+            <div class="akmstat-card" style="border-left: 4px solid var(--danger-color);">
+                <span class="akmstat-title" data-translate="hh_this_month_expenses">This Month Expenses</span>
+                <span class="akmstat-value" id="hh-expense">0 ကျပ်</span>
+            </div>
+        </div>
+
+        <div class="akmrow">
+            <div class="akmcol-md-12">
+                <div class="akmcard">
+                    <div class="akmcard-header">
+                        <h2 class="akmcard-title" data-translate="hh_recent_trans">Recent Transactions</h2>
+                        <button class="akmbtn akmbtn-primary" onclick="openHHTransactionModal()"><i class="fas fa-plus"></i> <span data-translate="hh_add_trans">Add Transaction</span></button>
+                    </div>
+                    
+                    <div class="akmfilter-controls" style="margin-bottom: 15px;">
+                        <div class="akmfilter-group">
+                            <label data-translate="label_month">Month:</label>
+                            <input type="month" id="hh-filter-month" class="akmform-control">
+                            <button class="akmbtn akmbtn-primary" onclick="renderHouseholdBudgetPage()" data-translate="btn_apply_filter">Apply Filter</button>
+                            <button class="akmbtn akmbtn-secondary" onclick="document.getElementById('hh-filter-month').value=''; renderHouseholdBudgetPage()" data-translate="btn_clear_filter">Clear Filter</button>
+                        </div>
+                    </div>
+
+                    <div class="akmtable-responsive">
+                        <table class="akmtable">
+                            <thead>
+                                <tr>
+                                    <th data-translate="table_date">Date</th>
+                                    <th data-translate="hh_type">Type</th>
+                                    <th data-translate="hh_category">Category</th>
+                                    <th data-translate="hh_amount">Amount</th>
+                                    <th data-translate="table_actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hh-transactions-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="hr-management-section" class="content-section" style="display: none;">
+        <div class="akmstats-grid">
+            <div class="akmstat-card" style="border-left: 4px solid #1877F2;">
+                <span class="akmstat-title" data-translate="hr_total_staff">Total Staff</span>
+                <span class="akmstat-value" id="hr-total-staff">0</span>
+            </div>
+            <div class="akmstat-card" style="border-left: 4px solid var(--success-color);">
+                <span class="akmstat-title" data-translate="hr_active_staff">Active Staff</span>
+                <span class="akmstat-value" id="hr-active-staff">0</span>
+            </div>
+            <div class="akmstat-card" style="border-left: 4px solid var(--warning-color);">
+                <span class="akmstat-title" data-translate="hr_today_present">Today Present</span>
+                <span class="akmstat-value" id="hr-today-present">0</span>
+            </div>
+            <div class="akmstat-card" style="border-left: 4px solid var(--danger-color);">
+                <span class="akmstat-title" data-translate="hr_month_salary_paid">This Month Salary</span>
+                <span class="akmstat-value" id="hr-month-salary">0 ကျပ်</span>
+            </div>
+        </div>
+
+        <div class="akmcard">
+            <div class="akmcard-header">
+                <h2 class="akmcard-title" data-translate="menu_hr">HR &amp; Employee Management</h2>
+                <div class="akmbtn-group" id="hr-action-btn-container">
+                    <button class="akmbtn akmbtn-primary" onclick="openHREmployeeModal()"><i class="fas fa-user-plus"></i> <span data-translate="hr_add_employee">Add Employee</span></button>
+                    <button class="akmbtn akmbtn-warning" onclick="openHRAttendanceModal()"><i class="fas fa-clipboard-user"></i> <span data-translate="hr_mark_attendance">Mark Attendance</span></button>
+                    <button class="akmbtn akmbtn-success" onclick="openHRPayrollModal()"><i class="fas fa-money-check-alt"></i> <span data-translate="hr_pay_salary">Pay Salary</span></button>
+                </div>
+            </div>
+
+            <div class="akmcategory-tabs">
+                <button class="akmcategory-tab active" id="hr-tab-employees" onclick="switchHRTab('employees')" data-translate="hr_employees_tab">Employees</button>
+                <button class="akmcategory-tab" id="hr-tab-attendance" onclick="switchHRTab('attendance')" data-translate="hr_attendance_tab">Attendance</button>
+                <button class="akmcategory-tab" id="hr-tab-payroll" onclick="switchHRTab('payroll')" data-translate="hr_payroll_tab">Payroll / Salary</button>
+            </div>
+
+            <div id="hr-employees-view" class="akmtable-responsive">
+                <table class="akmtable">
+                    <thead>
+                        <tr>
+                            <th data-translate="hr_emp_name">Name</th>
+                            <th data-translate="hr_position">Role/Position</th>
+                            <th data-translate="hr_phone">Phone</th>
+                            <th data-translate="hr_basic_salary">Basic Salary</th>
+                            <th data-translate="hr_join_date">Join Date</th>
+                            <th data-translate="table_status">Status</th>
+                            <th data-translate="table_actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hr-employees-table"></tbody>
+                </table>
+            </div>
+
+            <div id="hr-attendance-view" class="akmtable-responsive" style="display:none;">
+                <div class="akmfilter-controls" style="margin-bottom: 10px;">
+                    <div class="akmfilter-group">
+                        <label data-translate="label_date">Date:</label>
+                        <input type="date" id="hr-attendance-filter-date" class="akmform-control" onchange="renderHRPage()">
+                    </div>
+                </div>
+                <table class="akmtable">
+                    <thead>
+                        <tr>
+                            <th data-translate="table_date">Date</th>
+                            <th data-translate="hr_emp_name">Employee</th>
+                            <th data-translate="table_status">Status</th>
+                            <th data-translate="hr_notes">Remarks / Reason</th>
+                            <th data-translate="table_actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hr-attendance-table"></tbody>
+                </table>
+            </div>
+
+            <div id="hr-payroll-view" class="akmtable-responsive" style="display:none;">
+                <table class="akmtable">
+                    <thead>
+                        <tr>
+                            <th data-translate="table_date">Pay Date</th>
+                            <th data-translate="hr_emp_name">Employee</th>
+                            <th data-translate="label_month">For Month</th>
+                            <th data-translate="hr_basic_salary">Basic</th>
+                            <th data-translate="hr_bonus_allowance">Bonus/Allow.</th>
+                            <th data-translate="hr_deductions">Deduction</th>
+                            <th data-translate="hr_net_paid">Net Paid</th>
+                            <th data-translate="label_payment_method">Method</th>
+                            <th data-translate="table_actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hr-payroll-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="settings-section" class="content-section" style="display: none;"> 
+     <div class="akmcard settings-shell"> 
+      <div class="akmcard-header"> 
+       <h2 class="akmcard-title"><i class="fas fa-cog" style="color: var(--primary-color); margin-right: 8px;"></i><span data-translate="menu_settings">Settings</span></h2> 
+       <button class="akmbtn akmbtn-primary" type="button" id="save-settings-btn"><i class="fas fa-save"></i> <span data-translate="btn_save_settings">Save Settings</span></button>
+      </div> 
+      <div class="akmcard-body"> 
+
+       <div class="settings-tabs-bar" role="tablist">
+           <button type="button" class="settings-tab-btn active" data-settings-tab="general" onclick="switchSettingsTab('general')">
+               <i class="fas fa-sliders-h"></i> <span data-translate="tab_settings_general">General</span>
+           </button>
+           <button type="button" class="settings-tab-btn" data-settings-tab="printer" onclick="switchSettingsTab('printer')">
+               <i class="fas fa-print"></i> <span data-translate="tab_settings_printer">Printer</span>
+           </button>
+           <button type="button" class="settings-tab-btn" data-settings-tab="sync" onclick="switchSettingsTab('sync')">
+               <i class="fas fa-wifi"></i> <span data-translate="tab_settings_sync">Wi-Fi Sync</span>
+           </button>
+           <button type="button" class="settings-tab-btn" data-settings-tab="backup" onclick="switchSettingsTab('backup')">
+               <i class="fas fa-database"></i> <span data-translate="tab_settings_backup">Backup &amp; Data</span>
+           </button>
+       </div>
+
+       <div id="settings-pane-general" class="settings-tab-pane active">
+           <div class="settings-section-block">
+               <h4 class="settings-section-title"><i class="fas fa-store"></i> <span data-translate="title_store_preferences">Store &amp; Receipt Preferences</span></h4>
+               <div class="settings-grid-2">
+                   <div class="akmform-group">
+                       <label for="receipt-title-setting" class="akmform-label" data-translate="label_receipt_title">Receipt Title</label> 
+                       <input type="text" id="receipt-title-setting" class="akmform-control" placeholder="Free Free POS!"> 
+                   </div> 
+                   <div class="akmform-group">
+                       <label for="tax-rate-setting" class="akmform-label" data-translate="label_tax_rate">Tax Rate (%)</label> 
+                       <input type="number" id="tax-rate-setting" class="akmform-control" min="0" step="0.1"> 
+                   </div> 
+                   <div class="akmform-group">
+                       <label for="language-select" class="akmform-label" data-translate="label_language">Language</label> 
+                       <select id="language-select" class="akmform-control"> <option value="en">English</option> <option value="mm">မြန်မာ</option> </select> 
+                   </div> 
+                   <div class="akmform-group">
+                       <label for="app-mode-select" class="akmform-label" data-translate="label_app_mode">Application Mode</label>
+                       <select id="app-mode-select" class="akmform-control">
+                           <option value="retail" data-translate="mode_retail">Retail Mode</option>
+                           <option value="bakery" data-translate="mode_bakery">Bakery</option>
+                       </select>
+                   </div>
+                   <div class="akmform-group">
+                       <label for="theme-select" class="akmform-label" data-translate="label_theme">Theme / Appearance</label>
+                       <select id="theme-select" class="akmform-control">
+                           <option value="light" data-translate="theme_light">Light Mode</option>
+                           <option value="dark" data-translate="theme_dark">Dark Mode</option>
+                       </select>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <div id="settings-pane-printer" class="settings-tab-pane">
+           <div class="settings-section-block printer-management">
+               <h4 class="settings-section-title"><i class="fas fa-print"></i> <span data-translate="title_printer_settings">Thermal &amp; Bluetooth Printer Settings</span></h4>
+               <div class="akmform-group">
+                   <label for="printer-type-select" class="akmform-label" data-translate="label_printer_type">Printer Connection Method:</label>
+                   <select id="printer-type-select" class="akmform-control">
+                       <option value="bluetooth">Direct Web Bluetooth (ESC/POS 58mm/80mm)</option>
+                       <option value="rawbt">3rd Party Android App (RawBT / Bluetooth Printer)</option>
+                       <option value="browser">Browser Default (Standard Print)</option>
+                   </select>
+               </div>
+               <div class="akmform-group" id="bt-printer-group">
+                   <label class="akmform-label" data-translate="label_bt_device">Bluetooth Device:</label>
+                   <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                       <button type="button" class="akmbtn akmbtn-primary" id="connect-bt-printer-btn"><i class="fab fa-bluetooth-b"></i> <span data-translate="btn_pair_bluetooth">Pair / Connect Bluetooth Printer</span></button>
+                       <span id="bt-printer-status" class="akm-status-pill">Disconnected</span>
+                   </div>
+               </div>
+               <div class="akmform-group" style="margin-top: 12px; margin-bottom: 0;">
+                   <button type="button" class="akmbtn akmbtn-outline-primary" id="test-print-btn"><i class="fas fa-receipt"></i> <span data-translate="btn_test_print">Test Print Receipt</span></button>
+               </div>
+           </div>
+       </div>
+
+       <div id="settings-pane-sync" class="settings-tab-pane">
+           <div id="wifi-sync-panel" class="akm-feature-box">
+               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                   <h4 style="margin:0;"><i class="fas fa-qrcode" style="color:var(--primary-color);"></i> <span data-translate="title_wifi_sync">Wi-Fi Local Sync (WebRTC QR Scan)</span></h4>
+                   <span class="akm-status-pill" id="sync-status-pill"><span class="akmsync-dot offline" id="settings-sync-dot"></span> <span id="sync-connection-status">Disconnected</span></span>
+               </div>
+               <p style="font-size:0.82rem; color:var(--text-color); margin:0 0 12px 0;" data-translate="desc_wifi_sync">
+                   Synchronize products, stock, and sales across devices on the same Wi-Fi router without internet or extra software by scanning QR codes.
+               </p>
+
+               <div class="akmform-group">
+                   <label for="sync-role-select" class="akmform-label" data-translate="label_sync_role">Device Role</label>
+                   <select id="sync-role-select" class="akmform-control">
+                       <option value="standalone" data-translate="sync_role_standalone">Standalone (Single Device)</option>
+                       <option value="server" data-translate="sync_role_server">Server (Main Host)</option>
+                       <option value="counter" data-translate="sync_role_counter">Counter (Client Device)</option>
+                   </select>
+               </div>
+
+               <div id="sync-webrtc-panel" style="display:none;">
+                   <p style="font-size:0.8rem; color:var(--text-color); margin:0 0 10px 0;" data-translate="hint_webrtc_p2p">
+                       Pure browser-to-browser Wi-Fi sync with zero external software: scan QR codes between Server and Counter.
+                   </p>
+
+                   <div id="rtc-server-controls" style="display:none; margin-bottom:12px;">
+                       <div class="akmbtn-group">
+                           <button type="button" class="akmbtn akmbtn-primary" id="rtc-create-offer-btn">
+                               <i class="fas fa-qrcode"></i> <span data-translate="btn_rtc_create_offer">1. Create Offer QR</span>
+                           </button>
+                           <button type="button" class="akmbtn akmbtn-success" id="rtc-scan-answer-btn">
+                               <i class="fas fa-camera"></i> <span data-translate="btn_rtc_scan_answer">2. Scan Counter Answer QR</span>
+                           </button>
+                       </div>
+                   </div>
+
+                   <div id="rtc-counter-controls" style="display:none; margin-bottom:12px;">
+                       <div class="akmbtn-group">
+                           <button type="button" class="akmbtn akmbtn-primary" id="rtc-scan-offer-btn">
+                               <i class="fas fa-camera"></i> <span data-translate="btn_rtc_scan_offer">1. Scan Server Offer QR</span>
+                           </button>
+                       </div>
+                   </div>
+
+                   <div id="rtc-qr-display-box" style="display:none; text-align:center; background:#ffffff; padding:15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:12px;">
+                       <div id="rtc-qr-title" style="color:#050505; font-weight:700; margin-bottom:8px; font-size:0.9rem;">Scan this QR Code</div>
+                       <canvas id="rtc-qr-canvas" style="max-width:100%; height:auto;"></canvas>
+                   </div>
+
+                   <details style="margin-bottom:12px;">
+                       <summary style="cursor:pointer; font-size:0.8rem; color:var(--primary-color); font-weight:600;" data-translate="rtc_manual_fallback">
+                           Manual Copy / Paste (If device has no camera)
+                       </summary>
+                       <div style="margin-top:8px;">
+                           <div class="akmform-group">
+                               <label class="akmform-label" data-translate="label_rtc_local_code">Your Connection Code:</label>
+                               <div style="display:flex; gap:6px;">
+                                   <textarea id="rtc-local-sdp" class="akmform-control" rows="2" readonly placeholder="Generated Offer/Answer code will appear here..."></textarea>
+                                   <button type="button" class="akmbtn akmbtn-secondary" id="rtc-copy-local-btn" title="Copy"><i class="fas fa-copy"></i></button>
+                               </div>
+                           </div>
+                           <div class="akmform-group">
+                               <label class="akmform-label" data-translate="label_rtc_remote_code">Paste Other Device's Code:</label>
+                               <textarea id="rtc-remote-sdp" class="akmform-control" rows="2" placeholder="Paste Offer (on Counter) or Answer (on Server) here..."></textarea>
+                           </div>
+                           <div class="akmbtn-group">
+                               <button type="button" class="akmbtn akmbtn-primary" id="rtc-accept-offer-btn" style="display:none;"><i class="fas fa-link"></i> <span data-translate="btn_rtc_accept_offer">Accept Offer &amp; Create Answer</span></button>
+                               <button type="button" class="akmbtn akmbtn-success" id="rtc-accept-answer-btn" style="display:none;"><i class="fas fa-check"></i> <span data-translate="btn_rtc_complete">Complete Counter Connection</span></button>
+                           </div>
+                       </div>
+                   </details>
+
+                   <div class="akmbtn-group">
+                       <button type="button" class="akmbtn akmbtn-success" id="rtc-sync-now-btn"><i class="fas fa-sync-alt"></i> <span data-translate="btn_sync_now">Sync Now</span></button>
+                       <button type="button" class="akmbtn akmbtn-danger" id="rtc-disconnect-btn"><i class="fas fa-times"></i> <span data-translate="btn_sync_disconnect">Disconnect</span></button>
+                   </div>
+               </div>
+
+               <div class="akm-sync-log" id="sync-log-box">Ready. Mode: Standalone.</div>
+           </div>
+       </div>
+
+       <div id="settings-pane-backup" class="settings-tab-pane">
+           <div id="gdrive-backup-panel" class="akm-feature-box">
+               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                   <h4 style="margin:0;"><i class="fab fa-google-drive" style="color:#0F9D58;"></i> <span data-translate="title_gdrive_backup">Google Drive Backup &amp; Restore</span></h4>
+                   <span class="akm-status-pill" id="gdrive-auth-status">Not Connected</span>
+               </div>
+               <p style="font-size:0.82rem; color:var(--text-color); margin:0 0 12px 0;" data-translate="desc_gdrive_backup">
+                   Export your entire IndexedDB database as a JSON backup file directly to your Google Drive or restore from an existing backup.
+               </p>
+
+               <div class="akmform-group">
+                   <label for="gdrive-client-id" class="akmform-label" data-translate="label_gdrive_client_id">Google OAuth 2.0 Client ID</label>
+                   <input type="text" id="gdrive-client-id" class="akmform-control" placeholder="xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com">
+                   <small style="font-size:0.75rem; color:var(--text-color); display:block; margin-top:4px;" data-translate="hint_gdrive_client_id">
+                       Enter your Google Cloud Web OAuth Client ID (with Drive API enabled). Saved locally on this device.
+                   </small>
+               </div>
+
+               <div class="akmbtn-group">
+                   <button type="button" class="akmbtn akmbtn-info" id="gdrive-signin-btn"><i class="fab fa-google"></i> <span data-translate="btn_gdrive_signin">Connect Google Drive</span></button>
+                   <button type="button" class="akmbtn akmbtn-success" id="gdrive-backup-btn"><i class="fas fa-cloud-upload-alt"></i> <span data-translate="btn_gdrive_backup">Backup to Google Drive</span></button>
+                   <button type="button" class="akmbtn akmbtn-warning" id="gdrive-restore-btn"><i class="fas fa-cloud-download-alt"></i> <span data-translate="btn_gdrive_restore">Restore from Google Drive</span></button>
+               </div>
+
+               <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                   <span style="font-size:0.8rem; color:var(--text-color);" data-translate="label_local_json_backup">Offline JSON Backup File:</span>
+                   <div class="akmbtn-group">
+                       <button type="button" class="akmbtn akmbtn-sm akmbtn-outline-primary" id="local-backup-export-btn"><i class="fas fa-file-export"></i> <span data-translate="btn_export_json">Export JSON</span></button>
+                       <button type="button" class="akmbtn akmbtn-sm akmbtn-outline-primary" id="local-backup-import-btn"><i class="fas fa-file-import"></i> <span data-translate="btn_import_json">Import JSON</span></button>
+                       <input type="file" id="local-backup-file-input" accept=".json,application/json" style="display:none;">
+                   </div>
+               </div>
+               <div class="akm-sync-log" id="gdrive-log-box" style="display:none;"></div>
+           </div>
+
+           <div class="settings-section-block data-management"> 
+            <h4 class="settings-section-title"><i class="fas fa-trash-alt"></i> <span data-translate="title_data_management">Data Management</span></h4> 
+            
+            <div class="akmform-group" style="background: var(--card-bg); padding: 12px; border-radius: var(--border-radius); border: 1px dashed var(--border-color); margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <strong style="color: var(--text-emphasis);" data-translate="title_delete_sample_data">Delete Sample / Demo Data</strong>
+                        <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: var(--text-color);" data-translate="desc_delete_sample_data">နမူနာထည့်သွင်းထားသော ဒေတာများကိုသာ ရွေးချယ်ဖျက်ပစ်မည်</p>
+                    </div>
+                    <button class="akmbtn akmbtn-warning" type="button" id="delete-sample-data-btn"><i class="fas fa-broom"></i> <span data-translate="btn_delete_sample_data">Delete Sample Data</span></button>
+                </div>
+            </div>
+
+            <div class="akmform-group">
+                <label class="akmform-label" data-translate="label_delete_by_month">Delete Data by Month:</label>
+                <div class="akmfilter-group">
+                    <select id="delete-data-month" class="akmform-control" style="width: auto; min-width: 130px;"></select>
+                    <input type="number" id="delete-data-year" class="akmform-control akmyear-input" list="year-suggestions-list" placeholder="Year">
+                    <button class="akmbtn akmbtn-warning" type="button" id="delete-data-by-month-btn"><i class="fas fa-trash"></i> <span data-translate="btn_delete_data_month">Delete Data for Month</span></button>
+                </div>
+            </div>
+            <div class="akmform-group" style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border-color); margin-bottom: 0;">
+                <button class="akmbtn akmbtn-danger" type="button" id="reset-data-btn"><i class="fas fa-exclamation-triangle"></i> <span data-translate="btn_reset_all_data">Reset All Data</span></button> 
+                <p style="font-size: 0.8rem; opacity: 0.75; margin: 8px 0 0 0;" data-translate="warning_reset_data">Warning: Resetting data will delete all products, sales, and purchases and cannot be undone.</p> 
+            </div>
+           </div>
+       </div>
+
+      </div> 
+     </div> 
+    </section> 
+
+    <section id="reports-section" class="content-section" style="display: none;"> 
+     <div class="akmcard"> 
+      <div class="akmcard-header"> 
+       <h2 class="akmcard-title" data-translate="title_generate_reports">Generate Reports</h2> 
+      </div> 
+      <div class="akmcard-body"> 
+       <div class="akmrow"> 
+        <div class="akmcol-md-6"> 
+         <div class="akmcard" style="margin-top:0;"> 
+          <div class="akmcard-header"> 
+           <h3 class="akmcard-title" data-translate="title_daily_report">Daily Report</h3> 
+          </div> 
+          <div class="akmcard-body"> 
+           <div class="akmform-group"> <label for="report-date" class="akmform-label" data-translate="label_select_date">Select Date:</label> 
+            <input type="date" id="report-date" class="akmform-control"> 
+           </div> 
+           <button class="akmbtn akmbtn-primary" type="button" id="generate-report-btn"><i class="fas fa-file-alt"></i> <span data-translate="btn_generate_daily_report">Generate Daily Report</span></button> 
+          </div> 
+         </div> 
+        </div> 
+        <div class="akmcol-md-6"> 
+         <div class="akmcard" style="margin-top:0;"> 
+          <div class="akmcard-header"> 
+           <h3 class="akmcard-title" data-translate="title_monthly_report">Monthly Report</h3> 
+          </div> 
+          <div class="akmcard-body"> 
+           <div class="akmform-group"> <label for="report-month" class="akmform-label" data-translate="label_select_month">Select Month:</label> <select id="report-month" class="akmform-control"></select> 
+           </div> 
+           <div class="akmform-group"> <label for="report-year" class="akmform-label" data-translate="label_select_year">Select Year:</label> <input type="number" id="report-year" class="akmform-control" list="year-suggestions-list" placeholder="Year"> 
+           </div> 
+           <button class="akmbtn akmbtn-primary" type="button" id="generate-monthly-report-btn"><i class="fas fa-file-alt"></i> <span data-translate="btn_generate_monthly_report">Generate Monthly Report</span></button> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </section> 
+
+    <section id="about-section" class="content-section" style="display: none;"> 
+     <div class="akmcard"> 
+      <div class="akmcard-header"> 
+       <h2 class="akmcard-title" data-translate="menu_about">About</h2> 
+      </div> 
+      <div class="akmcard-body about-content"> 
+       <h3>Free Free POS!</h3> 
+       <p data-translate="about_version">Version 4.9 (User Guide + Elevated Button UI + Tabbed Settings)</p> 
+       <p data-translate="about_description">A streamlined and efficient Point of Sale (POS) system built for modern retail businesses, stores, and individual record keeping.</p> 
+       
+       <div class="contact-info">
+           <h3 data-translate="about_developer_title">Developer/Founder</h3> 
+           <p> Aung Kaung Myat </p>
+           <p><i class="fas fa-map-marker-alt"></i> Location: Mawlamyaing</p>
+           <p style="font-size: 0.78rem; color: var(--text-color); margin: 14px 0 8px 0; font-weight: 500;">
+               အကြံပြုလိုတာ ( သို့ ) ဆက်သွယ်လိုပါက
+           </p>
+           <div class="akmbtn-group">
+               <a href="https://t.me/ZNoteApp" target="_blank" rel="noopener noreferrer" class="akmbtn akmbtn-telegram">
+                   <i class="fab fa-telegram"></i> Contact on Telegram
+               </a>
+               <a href="https://www.tiktok.com/@kimyido26?_r=1&_t=ZS-9Bc0YukKc6x" target="_blank" rel="noopener noreferrer" class="akmbtn akmbtn-tiktok">
+                   <i class="fab fa-tiktok"></i> Contact on TikTok
+               </a>
+               <a href="https://www.linkedin.com/in/aung-kaung-myat-65b7a937b?utm_source=share_via&utm_content=profile" target="_blank" rel="noopener noreferrer" class="akmbtn akmbtn-linkedin">
+                   <i class="fab fa-linkedin"></i> Contact on LinkedIn
+               </a>
+           </div>
+       </div>
+      </div> 
+     </div> 
+    </section> 
+   </main> 
+  </div> 
+
+  <footer class="akmfooter"> 
+   <p>©️ Aung Kaung Myat production - Free Free POS!</p> 
+  </footer> 
+
+  <nav class="akmbottom-nav">
+      <a href="#" class="akmbottom-nav-link disabled-nav" id="nav-btn-back">
+          <i class="fas fa-chevron-left"></i>
+          <span>Back</span>
+      </a>
+      <a href="#" class="akmbottom-nav-link active" id="nav-btn-home" data-section="home">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+      </a>
+      <a href="#" class="akmbottom-nav-link disabled-nav" id="nav-btn-forward">
+          <i class="fas fa-chevron-right"></i>
+          <span>Forward</span>
+      </a>
+  </nav>
+
+  <div class="akm-modal" id="data-notice-modal">
+      <div class="akm-modal-dialog">
+          <div class="akm-modal-header">
+              <h3 class="akm-modal-title"><i class="fas fa-exclamation-triangle" style="color: var(--warning-color); margin-right: 6px;"></i> ' သတိပြုရန် ' Data သိမ်းဆည်းမှု အသိပေးချက်</h3>
+              <button type="button" class="akm-modal-close" aria-label="Close">×</button>
+          </div>
+          <div class="akm-modal-body data-notice-box">
+              <p style="margin-top: 0;">
+ဤ Free Free POS!သည် မည်သူမဆို အမြဲတန်း အခမဲ့သုံးဆွဲနိုင်အောင်ဖန်တီးထားခြင်းဖြစ်ပါသည်။</p>
+                <p style="margin-top: 0;">  Free Free POS! စနစ်မှ ထည့်သွင်းသော ကုန်ပစ္စည်း၊ အရောင်းစာရင်း၊ ဝန်ထမ်းနှင့် ဆက်တင် ဒေတာများကို Server ပေါ်တွင် မသိမ်းဆည်းဘဲ သင့်အသုံးပြုနေသော သင့် phone (သို့) device ရဲ့ Browser Data ထဲတွင်သာ လုံခြုံစွာ သိမ်းဆည်းထားပါသည်။
+              </p>
+              <ul>
+                  <li>
+                      Browser Cache / Site Data များကို ရှင်းလင်းခြင်း Clear Browsing Data ပြုလုပ်ပါက ဒေတာများ ပျက်သွားနိုင်ပါသည်။ Browsing history ကို clearလုပ်ရင်တော့ သင့်dataမပျက်ပါ။ Dataကိုဖျက်မှ ပျက်ပါသည်။
+                  </li>
+                  <li>
+                     Phone (သို့) deviceပြောင်းသုံးသည့်အခါ dataကူးပြောင်းရန်အတွက် Settings &gt; Backup &amp; Data ထဲမှ Backup ဖိုင် (Google Drive) ကို ပုံမှန်သိမ်းဆည်းထားသင့်ပါသည်။
+                  </li>
+              </ul>
+          </div>
+          <div class="akm-modal-footer">
+              <button type="button" class="akmbtn akmbtn-primary" onclick="closeModal('data-notice-modal')">Skip</button>
+          </div>
+      </div>
+  </div>
+  
+  <div class="akm-modal" id="scanner-modal">
+      <div class="akm-modal-dialog">
+          <div class="akm-modal-header">
+              <h3 class="akm-modal-title">QR / Barcode Scanner</h3>
+              <button type="button" class="akm-modal-close" onclick="stopScanner()">×</button>
+          </div>
+          <div class="akm-modal-body">
+              <div id="scanner-reader"></div>
+          </div>
+          <div class="akm-modal-footer">
+              <button type="button" class="akmbtn akmbtn-secondary" onclick="stopScanner()">Close</button>
+          </div>
+      </div>
+  </div>
+
+  <div class="akm-modal" id="todo-edit-modal">
+      <div class="akm-modal-dialog">
+          <div class="akm-modal-header">
+              <h3 class="akm-modal-title" data-translate="todo_modal_edit_title">Edit Task</h3>
+              <button type="button" class="akm-modal-close">×</button>
+          </div>
+          <div class="akm-modal-body">
+              <input type="hidden" id="edit-todo-id">
+              <div class="akmform-group">
+                  <label class="akmform-label" data-translate="todo_label_title">Task Title</label>
+                  <input type="text" id="edit-todo-text" class="akmform-control" required>
+              </div>
+              <div class="akmform-group">
+                  <label class="akmform-label" data-translate="todo_label_category">Category</label>
+                  <select id="edit-todo-category" class="akmform-control">
+                      <option value="shop" data-translate="todo_cat_shop">ဆိုင်အတွက် (Shop)</option>
+                      <option value="finance" data-translate="todo_cat_finance">ငွေစာရင်း (Finance)</option>
+                      <option value="inventory" data-translate="todo_cat_inventory">ကုန်ပစ္စည်း (Stock)</option>
+                      <option value="general" data-translate="todo_cat_general">အထွေထွေ (General)</option>
+                  </select>
+              </div>
+              <div class="akmform-group">
+                  <label class="akmform-label" data-translate="todo_label_priority">Priority</label>
+                  <select id="edit-todo-priority" class="akmform-control">
+                      <option value="high" data-translate="todo_prio_high">High (အရေးကြီး)</option>
+                      <option value="medium" data-translate="todo_prio_medium">Medium (သာမန်)</option>
+                      <option value="low" data-translate="todo_prio_low">Low (နောက်မှ)</option>
+                  </select>
+              </div>
+              <div class="akmform-group">
+                  <label class="akmform-label" data-translate="todo_label_due_date">Due Date &amp; Time</label>
+                  <input type="datetime-local" id="edit-todo-due" class="akmform-control">
+              </div>
+          </div>
+          <div class="akm-modal-footer">
+              <button type="button" class="akmbtn akmbtn-secondary akm-modal-close" data-translate="btn_cancel">Cancel</button>
+              <button type="button" class="akmbtn akmbtn-primary" onclick="saveEditedTodo()" data-translate="btn_save">Save</button>
+          </div>
+      </div>
+  </div>
+
+  <div class="akm-modal" id="product-modal"> 
+   <div class="akm-modal-dialog"> 
+    <div class="akm-modal-content"> 
+     <div class="akm-modal-header"> 
+      <h3 class="akm-modal-title" id="product-modal-title" data-translate="modal_add_product_title">Add Product</h3> <button type="button" class="akm-modal-close">×</button> 
+     </div> 
+     <div class="akm-modal-body"> 
+      <form id="product-form"> 
+       <input type="hidden" id="product-id"> 
+       <div class="akmform-group"> <label for="product-name" class="akmform-label" data-translate="label_product_name">Product Name</label> 
+        <input type="text" id="product-name" class="akmform-control" required> 
+       </div> 
+       <div class="akmform-group"> 
+           <label for="product-barcode" class="akmform-label">Barcode</label> 
+           <div style="display: flex; gap: 6px;">
+               <input type="text" id="product-barcode" class="akmform-control" placeholder="Scan or type barcode">
+               <button type="button" class="barcode-scan-btn" onclick="startScanner('product-barcode')" title="Scan Barcode / QR">
+                   <i class="fas fa-barcode"></i>
+                   <span data-translate="btn_scan_short">Scan</span>
+               </button>
+           </div>
+           <small class="akm-barcode-hint">
+               <i class="fas fa-qrcode"></i>
+               <span data-translate="hint_barcode_scan_product">ကင်မရာဖြင့် Barcode / QR Scan ဖတ်၍ ထည့်နိုင်ပါသည်</span>
+           </small>
+       </div> 
+       <div class="akmform-group"> <label for="product-category" class="akmform-label" data-translate="label_category">Category</label> <select id="product-category" class="akmform-control" required> <option value="" data-translate="placeholder_select_category">Select Category</option> </select> 
+       </div> 
+       <div class="akmform-group"> <label for="product-price" class="akmform-label" data-translate="label_price">Price</label> 
+        <input type="number" id="product-price" class="akmform-control" min="0" step="100" required> 
+       </div> 
+       <div class="akmform-group"> <label for="product-image-upload" class="akmform-label" data-translate="label_product_image">Product Image</label> 
+        <input type="file" id="product-image-upload" class="akmform-control" accept="image/*"> 
+        <div class="akmimage-upload-container"> 
+         <img id="product-image-preview" src="" alt="Image Preview" style="display: none;"> <button type="button" id="remove-image-btn" class="akmbtn akmbtn-sm akmbtn-danger" style="display: none;"><i class="fas fa-times"></i></button> 
+        </div> 
+       </div> 
+      </form> 
+     </div> 
+     <div class="akm-modal-footer"> <button type="button" class="akmbtn akmbtn-secondary akm-modal-close"><span data-translate="btn_cancel">Cancel</span></button> <button type="button" class="akmbtn akmbtn-danger" id="delete-product-btn" style="display: none;"><i class="fas fa-trash"></i> <span data-translate="btn_delete">Delete</span></button> <button type="button" class="akmbtn akmbtn-primary" id="save-product-btn"><span data-translate="btn_save_product">Save Product</span></button> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+
+  <div class="akm-modal" id="category-modal"> 
+   <div class="akm-modal-dialog"> 
+    <div class="akm-modal-content"> 
+     <div class="akm-modal-header"> 
+      <h3 class="akm-modal-title" id="category-modal-title" data-translate="modal_add_category_title">Add Category</h3> <button type="button" class="akm-modal-close">×</button> 
+     </div> 
+     <div class="akm-modal-body"> 
+      <form id="category-form"> 
+       <input type="hidden" id="category-id"> 
+       <div class="akmform-group"> <label for="category-name" class="akmform-label" data-translate="label_category_name">Category Name</label> 
+        <input type="text" id="category-name" class="akmform-control" required> 
+       </div> 
+      </form> 
+     </div> 
+     <div class="akm-modal-footer"> <button type="button" class="akmbtn akmbtn-secondary akm-modal-close"><span data-translate="btn_cancel">Cancel</span></button> <button type="button" class="akmbtn akmbtn-danger" id="delete-category-btn" style="display: none;"><i class="fas fa-trash"></i> <span data-translate="btn_delete">Delete</span></button> <button type="button" class="akmbtn akmbtn-primary" id="save-category-btn"><span data-translate="btn_save">Save</span></button> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+
+  <div class="akm-modal" id="purchase-modal"> 
+   <div class="akm-modal-dialog"> 
+    <div class="akm-modal-content"> 
+     <div class="akm-modal-header"> 
+      <h3 class="akm-modal-title" id="purchase-modal-title" data-translate="modal_add_purchase_title">Add Purchase / Stock</h3> <button type="button" class="akm-modal-close">×</button> 
+     </div> 
+     <div class="akm-modal-body"> 
+      <form id="purchase-form"> 
+       <input type="hidden" id="purchase-id"> 
+       <div class="akmform-group"> <label for="purchase-category" class="akmform-label" data-translate="label_category">Category</label> <select id="purchase-category" class="akmform-control" required> <option value="" data-translate="placeholder_select_category_first">Select Category First</option> </select> 
+       </div> 
+       <div class="akmform-group"> <label for="purchase-product" class="akmform-label" data-translate="label_product">Product</label> <select id="purchase-product" class="akmform-control" required disabled> <option value="" data-translate="placeholder_select_product">Select a Product</option> </select> 
+       </div> 
+       <div class="akmform-group"> <label for="purchase-supplier" class="akmform-label" data-translate="label_supplier_optional">Supplier (Optional)</label> 
+        <input type="text" id="purchase-supplier" class="akmform-control"> 
+       </div> 
+       <div class="akmform-group"> <label for="purchase-quantity" class="akmform-label" data-translate="label_quantity">Quantity</label> 
+        <input type="number" id="purchase-quantity" class="akmform-control" min="1" required> 
+       </div> 
+       <div class="akmrow">
+         <div class="akmcol-md-6">
+            <div class="akmform-group"> <label for="purchase-unit-cost" class="akmform-label" data-translate="label_unit_cost">Unit Cost</label> 
+                <input type="number" id="purchase-unit-cost" class="akmform-control" min="0" step="100"> 
+            </div> 
+         </div>
+         <div class="akmcol-md-6">
+            <div class="akmform-group"> <label for="purchase-total-cost" class="akmform-label" data-translate="label_total_cost">Total Cost</label> 
+                <input type="number" id="purchase-total-cost" class="akmform-control" min="0" step="100"> 
+            </div> 
+         </div>
+       </div>
+
+       <div class="akmform-group" style="background-color: var(--hover-overlay); padding: 10px; border-radius: 6px; margin-bottom: 12px; border: 1px dashed var(--border-color);">
+           <label for="purchase-new-price" class="akmform-label" data-translate="label_new_selling_price" style="color: var(--primary-color);">New Selling Price (Optional)</label>
+           <input type="number" id="purchase-new-price" class="akmform-control" min="0" step="100">
+           <small id="current-price-hint" style="color: var(--text-color); font-size: 0.8rem; margin-top: 4px; display: block; font-weight: 500;"></small>
+       </div>
+
+       <div class="akmform-group"> <label for="purchase-date" class="akmform-label" data-translate="label_date_time">Purchase Date &amp; Time</label> 
+        <input type="datetime-local" id="purchase-date" class="akmform-control" required> 
+       </div> 
+       <div class="akmform-group" id="purchase-expiry-date-group" style="display: none;">
+        <label for="purchase-expiry-date" class="akmform-label" data-translate="label_expiry_date">Expiration Date</label>
+        <input type="date" id="purchase-expiry-date" class="akmform-control">
+       </div>
+      </form> 
+     </div> 
+     <div class="akm-modal-footer"> <button type="button" class="akmbtn akmbtn-secondary akm-modal-close"><span data-translate="btn_cancel">Cancel</span></button> <button type="button" class="akmbtn akmbtn-primary" id="save-purchase-btn"><span data-translate="btn_save_purchase">Save Purchase</span></button> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+
+  <div class="akm-modal" id="confirm-modal"> 
+   <div class="akm-modal-dialog"> 
+    <div class="akm-modal-content"> 
+     <div class="akm-modal-header"> 
+      <h3 class="akm-modal-title" id="confirm-modal-title">Confirm Action</h3> <button type="button" class="akm-modal-close">×</button> 
+     </div> 
+     <div class="akm-modal-body"> 
+      <p id="confirm-modal-message">Are you sure?</p> 
+      <div id="reset-confirm-input-container" style="display: none;"> 
+       <input type="text" id="reset-confirm-input" class="akmform-control" placeholder=""> 
+      </div> 
+     </div> 
+     <div class="akm-modal-footer"> <button type="button" class="akmbtn akmbtn-secondary akm-modal-close" id="confirm-modal-cancel-btn"><span data-translate="btn_cancel">Cancel</span></button> <button type="button" class="akmbtn akmbtn-danger" id="confirm-ok-btn"><span data-translate="btn_confirm">Confirm</span></button> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+
+  <div class="akm-modal" id="report-modal"> 
+   <div class="akm-modal-dialog" style="max-width: 800px;"> 
+    <div class="akm-modal-content"> 
+     <div class="akm-modal-header"> 
+      <h3 class="akm-modal-title"><span data-translate="title_report">Report</span> - <span id="report-date-title"></span></h3> <button type="button" class="akm-modal-close">×</button> 
+     </div> 
+     <div class="akm-modal-body" id="report-content-wrapper"> 
+      <div id="report-content"></div> 
+     </div> 
+     <div class="akm-modal-footer"> <button type="button" class="akmbtn akmbtn-secondary akm-modal-close"><span data-translate="btn_close">Close</span></button> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+
+  <div class="akm-modal" id="image-viewer-modal"> 
+   <div class="akm-modal-dialog"> <button type="button" class="akm-modal-close" style="position: absolute; top: 10px; right: 10px; z-index: 1; font-size: 2rem;">×</button> 
+    <img id="full-size-image" src="" alt="Full-size Product Image"> 
+   </div> 
+  </div> 
+
+  <div class="akm-modal" id="receipt-modal"> 
+   <div class="akm-modal-dialog"> 
+    <div class="akm-modal-content"> 
+     <div class="akm-modal-header"> 
+      <h3 class="akm-modal-title" data-translate="modal_sale_completed_title">Sale Completed</h3> <button type="button" class="akm-modal-close">×</button> 
+     </div> 
+     <div class="akm-modal-body"> 
+      <div id="receipt-content"></div> 
+     </div> 
+     <div class="akm-modal-footer"> 
+         <button type="button" class="akmbtn akmbtn-secondary akm-modal-close"><span data-translate="btn_close">Close</span></button> 
+         <button type="button" class="akmbtn akmbtn-info" id="print-receipt-btn" style="background-color: #0284c7;"><i class="fas fa-print"></i> <span data-translate="btn_print_receipt">Print Thermal</span></button>
+         <button type="button" class="akmbtn akmbtn-primary" id="save-receipt-img-btn"><i class="fas fa-image"></i> <span data-translate="btn_save_image">Save Image</span></button> 
+         <button type="button" class="akmbtn akmbtn-success" id="share-receipt-btn"><i class="fas fa-share-alt"></i> <span data-translate="btn_share_receipt">Share</span></button> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+ 
+  <div class="akm-modal" id="sale-details-modal">
+    <div class="akm-modal-dialog">
+        <div class="akm-modal-content">
+            <div class="akm-modal-header">
+                <h3 class="akm-modal-title" id="sale-details-title">Sale Details</h3>
+                <button type="button" class="akm-modal-close" data-target="sale-details-modal">×</button>
+            </div>
+            <div class="akm-modal-body" id="sale-details-body"></div>
+            <div class="akm-modal-footer">
+                <button type="button" class="akmbtn akmbtn-info" id="print-sale-details-btn" style="background-color: #0284c7;"><i class="fas fa-print"></i> Print</button>
+                <button type="button" class="akmbtn akmbtn-secondary akm-modal-close" data-target="sale-details-modal"><span data-translate="btn_close">Close</span></button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div class="akm-modal" id="hh-transaction-modal">
+      <div class="akm-modal-dialog">
+          <div class="akm-modal-content">
+              <div class="akm-modal-header">
+                  <h3 class="akm-modal-title" data-translate="hh_modal_add_trans">Add Household Transaction</h3>
+                  <button type="button" class="akm-modal-close">×</button>
+              </div>
+              <div class="akm-modal-body">
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="hh_type">Type</label>
+                      <select id="hh-trans-type" class="akmform-control">
+                          <option value="expense" data-translate="hh_type_expense">Expense</option>
+                          <option value="income" data-translate="hh_type_income">Income</option>
+                      </select>
+                  </div>
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="hh_category">Category</label>
+                      <input type="text" id="hh-trans-category" class="akmform-control" placeholder="e.g. Groceries, Electricity, Salary" required>
+                  </div>
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="hh_amount">Amount</label>
+                      <input type="number" id="hh-trans-amount" class="akmform-control" required>
+                  </div>
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="table_date">Date</label>
+                      <input type="date" id="hh-trans-date" class="akmform-control" required>
+                  </div>
+              </div>
+              <div class="akm-modal-footer">
+                  <button type="button" class="akmbtn akmbtn-secondary akm-modal-close" data-translate="btn_cancel">Cancel</button>
+                  <button type="button" class="akmbtn akmbtn-primary" onclick="saveHHTransaction()" data-translate="btn_save">Save</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="akm-modal" id="hr-employee-modal">
+      <div class="akm-modal-dialog">
+          <div class="akm-modal-content">
+              <div class="akm-modal-header">
+                  <h3 class="akm-modal-title" id="hr-employee-modal-title" data-translate="hr_modal_add_employee">Add Employee</h3>
+                  <button type="button" class="akm-modal-close">×</button>
+              </div>
+              <div class="akm-modal-body">
+                  <input type="hidden" id="hr-emp-id">
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="hr_emp_name">Employee Name</label>
+                      <input type="text" id="hr-emp-name" class="akmform-control" required>
+                  </div>
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="hr_position">Role / Position</label>
+                      <input type="text" id="hr-emp-position" class="akmform-control" placeholder="e.g. Cashier, Sales, Chef, Manager" required>
+                  </div>
+                  <div class="akmrow">
+                      <div class="akmcol-md-6">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="hr_phone">Phone</label>
+                              <input type="text" id="hr-emp-phone" class="akmform-control">
+                          </div>
+                      </div>
+                      <div class="akmcol-md-6">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="hr_basic_salary">Basic Salary (Monthly)</label>
+                              <input type="number" id="hr-emp-salary" class="akmform-control" min="0" required>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="akmrow">
+                      <div class="akmcol-md-6">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="hr_join_date">Join Date</label>
+                              <input type="date" id="hr-emp-joindate" class="akmform-control" required>
+                          </div>
+                      </div>
+                      <div class="akmcol-md-6">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="table_status">Status</label>
+                              <select id="hr-emp-status" class="akmform-control">
+                                  <option value="active">Active</option>
+                                  <option value="resigned">Resigned / Inactive</option>
+                              </select>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="akm-modal-footer">
+                  <button type="button" class="akmbtn akmbtn-secondary akm-modal-close" data-translate="btn_cancel">Cancel</button>
+                  <button type="button" class="akmbtn akmbtn-primary" onclick="saveHREmployee()" data-translate="btn_save">Save Employee</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="akm-modal" id="hr-attendance-modal">
+      <div class="akm-modal-dialog">
+          <div class="akm-modal-content">
+              <div class="akm-modal-header">
+                  <h3 class="akm-modal-title" data-translate="hr_modal_mark_attendance">Mark Attendance</h3>
+                  <button type="button" class="akm-modal-close">×</button>
+              </div>
+              <div class="akm-modal-body">
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="hr_select_employee">Select Employee</label>
+                      <select id="hr-att-employee" class="akmform-control" required></select>
+                  </div>
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="table_date">Date</label>
+                      <input type="date" id="hr-att-date" class="akmform-control" required>
+                  </div>
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="table_status">Status</label>
+                      <select id="hr-att-status" class="akmform-control">
+                          <option value="present">Present (ရုံးတက်)</option>
+                          <option value="absent">Absent (ပျက်ကွက်)</option>
+                          <option value="leave">On Leave (ခွင့်ယူ)</option>
+                          <option value="half-day">Half Day (အချိန်ပိုင်း)</option>
+                      </select>
+                  </div>
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="hr_notes">Remarks / Reason</label>
+                      <input type="text" id="hr-att-notes" class="akmform-control" placeholder="e.g. Medical leave, Late 30 mins">
+                  </div>
+              </div>
+              <div class="akm-modal-footer">
+                  <button type="button" class="akmbtn akmbtn-secondary akm-modal-close" data-translate="btn_cancel">Cancel</button>
+                  <button type="button" class="akmbtn akmbtn-primary" onclick="saveHRAttendance()" data-translate="btn_save">Save</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="akm-modal" id="hr-payroll-modal">
+      <div class="akm-modal-dialog">
+          <div class="akm-modal-content">
+              <div class="akm-modal-header">
+                  <h3 class="akm-modal-title" data-translate="hr_modal_pay_salary">Record Salary Payment</h3>
+                  <button type="button" class="akm-modal-close">×</button>
+              </div>
+              <div class="akm-modal-body">
+                  <div class="akmform-group">
+                      <label class="akmform-label" data-translate="hr_select_employee">Select Employee</label>
+                      <select id="hr-pay-employee" class="akmform-control" onchange="autoFillHRSalary()" required></select>
+                  </div>
+                  <div class="akmrow">
+                      <div class="akmcol-md-6">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="label_month">For Month</label>
+                              <input type="month" id="hr-pay-month" class="akmform-control" required>
+                          </div>
+                      </div>
+                      <div class="akmcol-md-6">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="table_date">Pay Date</label>
+                              <input type="date" id="hr-pay-date" class="akmform-control" required>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="akmrow">
+                      <div class="akmcol-md-4">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="hr_basic_salary">Basic</label>
+                              <input type="number" id="hr-pay-basic" class="akmform-control" oninput="calculateHRNetPay()" required>
+                          </div>
+                      </div>
+                      <div class="akmcol-md-4">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="hr_bonus_allowance">Bonus</label>
+                              <input type="number" id="hr-pay-bonus" class="akmform-control" value="0" oninput="calculateHRNetPay()">
+                          </div>
+                      </div>
+                      <div class="akmcol-md-4">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="hr_deductions">Deduction</label>
+                              <input type="number" id="hr-pay-deduct" class="akmform-control" value="0" oninput="calculateHRNetPay()">
+                          </div>
+                      </div>
+                  </div>
+                  <div class="akmrow">
+                      <div class="akmcol-md-6">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="hr_net_paid">Net Salary Paid</label>
+                              <input type="number" id="hr-pay-net" class="akmform-control" readonly style="font-weight:bold; color:var(--primary-color);">
+                          </div>
+                      </div>
+                      <div class="akmcol-md-6">
+                          <div class="akmform-group">
+                              <label class="akmform-label" data-translate="label_payment_method">Payment Method</label>
+                              <select id="hr-pay-method" class="akmform-control">
+                                  <option value="Cash">Cash</option>
+                                  <option value="KBZ Pay">KBZ Pay</option>
+                                  <option value="Bank Transfer">Bank Transfer</option>
+                              </select>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="akm-modal-footer">
+                  <button type="button" class="akmbtn akmbtn-secondary akm-modal-close" data-translate="btn_cancel">Cancel</button>
+                  <button type="button" class="akmbtn akmbtn-success" onclick="saveHRPayroll()" data-translate="hr_confirm_pay">Confirm &amp; Pay</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="akm-modal" id="ad-popup-modal">
+      <div class="akm-modal-dialog">
+          <div class="akm-modal-header ad-modal-header">
+              <h3 class="akm-modal-title" id="ad-modal-title"></h3>
+              <button type="button" class="akm-modal-close" id="ad-modal-close-btn" aria-label="Close">×</button>
+          </div>
+          <div class="akm-modal-body ad-modal-body" id="ad-modal-body"></div>
+      </div>
+  </div>
+
+  <script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then((registration) => {
+                console.log('Service Worker Registered successfully! Scope:', registration.scope);
+            })
+            .catch((error) => {
+                console.error('Service Worker registration failed:', error);
+            });
+    });
+}
+</script>
+<script src="app.js"></script>
+</body>
+</html
