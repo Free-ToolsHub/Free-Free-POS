@@ -1,4 +1,4 @@
-# Free Free POS! (FF POS007)
+# Free Free POS! 
 
 
 ## Third-Party Libraries
