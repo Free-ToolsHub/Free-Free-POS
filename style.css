@@ -1228,8 +1228,20 @@ body.dark-mode .barcode-scan-btn { color: #18191A; }
 #pagination-info, #stock-pagination-info, #category-pagination-info, #sale-history-pagination-info, #expiring-soon-pagination-info { font-size: 0.9rem; font-weight: 500; }
 
 #scanner-modal { z-index: 2000 !important; }
-#scanner-modal video { width: 100%; max-height: 300px; border-radius: var(--border-radius); object-fit: cover; }
-
+#scanner-reader {
+  width: 100% !important;
+  min-height: 280px !important;
+  background-color: #000000 !important;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  position: relative;
+}
+#scanner-modal video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+}
 #ad-popup-modal .akm-modal-dialog {
   max-width: 460px;
   overflow: hidden;
