@@ -1,3 +1,5 @@
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const DB_NAME = 'FFPOS006A';
     const DB_VERSION = 1;
@@ -3429,6 +3431,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.getElementById('gdrive-signin-btn').addEventListener('click', signInGoogleDrive);
+        document.getElementById('gdrive-signin-btn').addEventListener('click', signInGoogleDrive);
         document.getElementById('gdrive-backup-btn').addEventListener('click', handleBackupToGoogleDrive);
         document.getElementById('gdrive-restore-btn').addEventListener('click', handleRestoreFromGoogleDrive);
         document.getElementById('local-backup-export-btn').addEventListener('click', handleLocalJsonExport);
@@ -3490,114 +3493,104 @@ document.addEventListener('DOMContentLoaded', () => {
         setupImageUploadListeners();
     }
     
-    window.stopScanner = function() {
+    window.stopScanner = async function() {
         if (html5QrCode) {
-            html5QrCode.stop().then(() => {
+            try {
+                if (html5QrCode.isScanning) {
+                    await html5QrCode.stop();
+                }
                 html5QrCode.clear();
-                closeModal('scanner-modal');
-            }).catch(err => {
-                console.error("Scanner stop error:", err);
-                closeModal('scanner-modal');
-            });
-        } else {
-            closeModal('scanner-modal');
+            } catch (err) {
+                console.warn("Scanner stop issue:", err);
+            }
+            html5QrCode = null;
         }
+        closeModal('scanner-modal');
     };
 
-    // iOS Safari နှင့် Mobile Devices များအားလုံးတွင် 1D Barcode (EAN, UPC, Code 128) နှင့် QR ဖတ်နိုင်ရန် ပြင်ဆင်ထားသည့် Scanner
     window.startScanner = function(targetInputId) {
         openModal('scanner-modal');
 
-        if (html5QrCode) {
-            try { html5QrCode.clear(); } catch(e) {}
+        const readerContainer = document.getElementById("scanner-reader");
+        if (readerContainer) {
+            readerContainer.innerHTML = '<div style="color:#ffffff; text-align:center; padding:50px 10px;"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>ကင်မရာ ဖွင့်နေပါသည်...</div>';
         }
 
-        const supportedFormats = (typeof Html5QrcodeSupportedFormats !== 'undefined') ? [
-            Html5QrcodeSupportedFormats.QR_CODE,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.CODABAR,
-            Html5QrcodeSupportedFormats.ITF
-        ] : undefined;
+        setTimeout(async () => {
+            try {
+                if (html5QrCode) {
+                    try {
+                        if (html5QrCode.isScanning) await html5QrCode.stop();
+                        html5QrCode.clear();
+                    } catch(e) {}
+                    html5QrCode = null;
+                }
 
-        html5QrCode = new Html5Qrcode("scanner-reader", {
-            formatsToSupport: supportedFormats,
-            verbose: false,
-            experimentalFeatures: {
-                useBarCodeDetectorIfSupported: true
-            }
-        });
+                if (readerContainer) readerContainer.innerHTML = '';
 
-        const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
-            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-            const qrboxWidth = Math.floor(minEdge * 0.85);
-            const qrboxHeight = Math.floor(qrboxWidth * 0.65);
-            return {
-                width: Math.max(qrboxWidth, 240),
-                height: Math.max(qrboxHeight, 150)
-            };
-        };
+                let formats = undefined;
+                if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
+                    formats = Object.values(Html5QrcodeSupportedFormats);
+                } else if (window.Html5QrcodeSupportedFormats) {
+                    formats = Object.values(window.Html5QrcodeSupportedFormats);
+                }
 
-        const scannerConfig = {
-            fps: 15,
-            qrbox: qrboxFunction,
-            aspectRatio: 1.333333,
-            disableFlip: false
-        };
+                const config = {
+                    verbose: false
+                };
+                if (formats && formats.length > 0) {
+                    config.formatsToSupport = formats;
+                }
 
-        const cameraConstraints = {
-            facingMode: { ideal: "environment" },
-            width: { min: 640, ideal: 1280, max: 1920 },
-            height: { min: 480, ideal: 720, max: 1080 }
-        };
+                html5QrCode = new Html5Qrcode("scanner-reader", config);
 
-        html5QrCode.start(cameraConstraints, scannerConfig, (decodedText) => {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                    closeModal('scanner-modal');
+                const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
+                    const width = Math.floor(viewfinderWidth * 0.85);
+                    const height = Math.floor(Math.min(viewfinderHeight * 0.55, 180));
+                    return {
+                        width: Math.max(width, 240),
+                        height: Math.max(height, 120)
+                    };
+                };
 
-                    const targetEl = document.getElementById(targetInputId);
-                    if (targetEl) {
-                        targetEl.value = decodedText;
-                        targetEl.dispatchEvent(new Event('input'));
+                const scanConfig = {
+                    fps: 15,
+                    qrbox: qrboxFunction,
+                    disableFlip: false
+                };
+
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    scanConfig,
+                    (decodedText) => {
+                        window.stopScanner();
+
+                        const targetEl = document.getElementById(targetInputId);
+                        if (targetEl) {
+                            targetEl.value = decodedText;
+                            targetEl.dispatchEvent(new Event('input'));
+                        }
+
+                        if (targetInputId === 'product-search') {
+                            findProductByBarcodeAndAdd(decodedText, true);
+                        } else if (targetInputId === 'rtc-offer-scan') {
+                            document.getElementById('rtc-remote-sdp').value = decodedText;
+                            acceptRtcOfferAndCreateAnswer(decodedText);
+                        } else if (targetInputId === 'rtc-answer-scan') {
+                            document.getElementById('rtc-remote-sdp').value = decodedText;
+                            acceptRtcAnswerOnServer(decodedText);
+                        }
+                    },
+                    (errorMessage) => {
+                        // scanning frame မတွေ့သေးသည့် သာမန် log များ
                     }
-
-                    if (targetInputId === 'product-search') {
-                        findProductByBarcodeAndAdd(decodedText, true);
-                    } else if (targetInputId === 'rtc-offer-scan') {
-                        document.getElementById('rtc-remote-sdp').value = decodedText;
-                        acceptRtcOfferAndCreateAnswer(decodedText);
-                    } else if (targetInputId === 'rtc-answer-scan') {
-                        document.getElementById('rtc-remote-sdp').value = decodedText;
-                        acceptRtcAnswerOnServer(decodedText);
-                    }
-                }).catch(err => console.error("Scanner stop error:", err));
-            }
-        }, () => {}).catch(err => {
-            console.error("Camera access error (trying fallback):", err);
-            html5QrCode.start({ facingMode: "environment" }, scannerConfig, (decodedText) => {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                    closeModal('scanner-modal');
-                    const targetEl = document.getElementById(targetInputId);
-                    if (targetEl) {
-                        targetEl.value = decodedText;
-                        targetEl.dispatchEvent(new Event('input'));
-                    }
-                    if (targetInputId === 'product-search') {
-                        findProductByBarcodeAndAdd(decodedText, true);
-                    }
-                });
-            }).catch(e => {
-                alert("ကင်မရာဖွင့်၍ မရပါ။ Settings > Safari > Camera Permission ပေးထားခြင်း ရှိမရှိ စစ်ဆေးပေးပါ။");
+                );
+            } catch (err) {
+                console.error("Camera Open Error:", err);
+                alert("ကင်မရာဖွင့်၍ မရပါ။ ကျေးဇူးပြု၍ Browser Settings တွင် Camera Permission ခွင့်ပြုပေးထားခြင်း ရှိမရှိ စစ်ဆေးပါ။");
                 closeModal('scanner-modal');
-            });
-        });
+            }
+        }, 300);
     };
     
     async function findProductByBarcodeAndAdd(barcode, autoAdd = false) {
@@ -4142,7 +4135,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else {
                 const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
+                link.href = URL.createObjectURL(file);
                 link.download = file.name;
                 link.click();
             }
