@@ -1,5 +1,3 @@
-
-
 document.addEventListener('DOMContentLoaded', () => {
     const DB_NAME = 'FFPOS006A';
     const DB_VERSION = 1;
@@ -7,6 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let dbInstance;
     let itemToDelete = null;
     let html5QrCode = null;
+    let quaggaTimer = null;
+    let scannerTargetInputId = null;
+    let isHandlingScan = false;
+    let currentScannerZoom = 1;
+    let currentScannerTorch = false;
     let bluetoothDevice = null;
     let bluetoothCharacteristic = null;
     
@@ -3431,7 +3434,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.getElementById('gdrive-signin-btn').addEventListener('click', signInGoogleDrive);
-        document.getElementById('gdrive-signin-btn').addEventListener('click', signInGoogleDrive);
         document.getElementById('gdrive-backup-btn').addEventListener('click', handleBackupToGoogleDrive);
         document.getElementById('gdrive-restore-btn').addEventListener('click', handleRestoreFromGoogleDrive);
         document.getElementById('local-backup-export-btn').addEventListener('click', handleLocalJsonExport);
@@ -3493,7 +3495,186 @@ document.addEventListener('DOMContentLoaded', () => {
         setupImageUploadListeners();
     }
     
+    function clearQuaggaLoop() {
+        if (quaggaTimer) {
+            clearInterval(quaggaTimer);
+            quaggaTimer = null;
+        }
+    }
+
+    async function handleDecodedScanResult(decodedText) {
+        if (!decodedText || isHandlingScan) return;
+        isHandlingScan = true;
+        const targetId = scannerTargetInputId;
+
+        await window.stopScanner();
+
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+            targetEl.value = decodedText;
+            targetEl.dispatchEvent(new Event('input'));
+        }
+
+        if (targetId === 'product-search') {
+            findProductByBarcodeAndAdd(decodedText, true);
+        } else if (targetId === 'rtc-offer-scan') {
+            document.getElementById('rtc-remote-sdp').value = decodedText;
+            acceptRtcOfferAndCreateAnswer(decodedText);
+        } else if (targetId === 'rtc-answer-scan') {
+            document.getElementById('rtc-remote-sdp').value = decodedText;
+            acceptRtcAnswerOnServer(decodedText);
+        }
+    }
+
+    function startQuaggaFallbackLoop(targetInputId) {
+        clearQuaggaLoop();
+        if (typeof Quagga === 'undefined') return;
+        if (targetInputId === 'rtc-offer-scan' || targetInputId === 'rtc-answer-scan') return;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        let isDecoding = false;
+        let lastCode = null;
+        let matchCount = 0;
+
+        quaggaTimer = setInterval(() => {
+            if (isHandlingScan || isDecoding) return;
+            const video = document.querySelector('#scanner-reader video');
+            if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
+
+            isDecoding = true;
+            try {
+                const vw = video.videoWidth;
+                const vh = video.videoHeight;
+                const cropH = Math.floor(vh * 0.55);
+                const cropY = Math.floor((vh - cropH) / 2);
+
+                canvas.width = vw;
+                canvas.height = cropH;
+                ctx.drawImage(video, 0, cropY, vw, cropH, 0, 0, vw, cropH);
+
+                Quagga.decodeSingle({
+                    src: canvas.toDataURL('image/jpeg', 0.85),
+                    numOfWorkers: 0,
+                    locate: true,
+                    inputStream: { size: 960 },
+                    decoder: {
+                        readers: [
+                            'ean_reader',
+                            'ean_8_reader',
+                            'code_128_reader',
+                            'code_39_reader',
+                            'upc_reader',
+                            'upc_e_reader',
+                            'codabar_reader',
+                            'i2of5_reader'
+                        ]
+                    }
+                }, (result) => {
+                    isDecoding = false;
+                    const code = result && result.codeResult && result.codeResult.code;
+                    if (!code || isHandlingScan) return;
+
+                    const errors = (result.codeResult.decodedCodes || [])
+                        .filter(d => typeof d.error === 'number')
+                        .map(d => d.error);
+                    const avgError = errors.length ? errors.reduce((a, b) => a + b, 0) / errors.length : 0;
+                    if (avgError > 0.2) return;
+
+                    if (code === lastCode) {
+                        matchCount++;
+                    } else {
+                        lastCode = code;
+                        matchCount = 1;
+                    }
+
+                    if (matchCount >= 2) {
+                        handleDecodedScanResult(code);
+                    }
+                });
+            } catch (e) {
+                isDecoding = false;
+            }
+        }, 280);
+    }
+
+    function setupScannerTrackControls() {
+        const video = document.querySelector('#scanner-reader video');
+        const controlsBar = document.getElementById('scanner-controls');
+        const zoomBtn = document.getElementById('scanner-zoom-btn');
+        const torchBtn = document.getElementById('scanner-torch-btn');
+
+        if (!video || !video.srcObject) return;
+        const track = video.srcObject.getVideoTracks()[0];
+        if (!track || typeof track.getCapabilities !== 'function') return;
+
+        const caps = track.getCapabilities();
+        let hasControl = false;
+
+        if (caps.focusMode && caps.focusMode.includes('continuous')) {
+            track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+        }
+
+        if (caps.zoom && caps.zoom.max > 1) {
+            hasControl = true;
+            currentScannerZoom = 1;
+            zoomBtn.style.display = 'inline-flex';
+            zoomBtn.querySelector('span').textContent = '2x';
+            zoomBtn.onclick = async () => {
+                try {
+                    const targetZoom = currentScannerZoom === 1 ? Math.min(2, caps.zoom.max) : 1;
+                    await track.applyConstraints({ advanced: [{ zoom: targetZoom }] });
+                    currentScannerZoom = targetZoom;
+                    zoomBtn.querySelector('span').textContent = targetZoom === 1 ? '2x' : '1x';
+                } catch (e) { console.warn('Zoom failed:', e); }
+            };
+        } else {
+            zoomBtn.style.display = 'none';
+        }
+
+        if (caps.torch) {
+            hasControl = true;
+            currentScannerTorch = false;
+            torchBtn.style.display = 'inline-flex';
+            torchBtn.onclick = async () => {
+                try {
+                    currentScannerTorch = !currentScannerTorch;
+                    await track.applyConstraints({ advanced: [{ torch: currentScannerTorch }] });
+                    torchBtn.classList.toggle('akmbtn-warning', currentScannerTorch);
+                    torchBtn.classList.toggle('akmbtn-outline-primary', !currentScannerTorch);
+                } catch (e) { console.warn('Torch failed:', e); }
+            };
+        } else {
+            torchBtn.style.display = 'none';
+        }
+
+        if (hasControl && controlsBar) controlsBar.style.display = 'flex';
+    }
+
+    async function populateScannerCameras(activeCameraId = null) {
+        const select = document.getElementById('scanner-camera-select');
+        const controlsBar = document.getElementById('scanner-controls');
+        if (!select || typeof Html5Qrcode === 'undefined') return;
+
+        try {
+            const devices = await Html5Qrcode.getCameras();
+            if (devices && devices.length > 1) {
+                select.innerHTML = devices.map((d, idx) =>
+                    `<option value="${d.id}" ${d.id === activeCameraId ? 'selected' : ''}>${d.label || 'Camera ' + (idx + 1)}</option>`
+                ).join('');
+                select.style.display = 'block';
+                if (controlsBar) controlsBar.style.display = 'flex';
+                select.onchange = () => {
+                    window.startScanner(scannerTargetInputId, select.value);
+                };
+            } else {
+                select.style.display = 'none';
+            }
+        } catch (e) {}
+    }
+
     window.stopScanner = async function() {
+        clearQuaggaLoop();
         if (html5QrCode) {
             try {
                 if (html5QrCode.isScanning) {
@@ -3508,16 +3689,70 @@ document.addEventListener('DOMContentLoaded', () => {
         closeModal('scanner-modal');
     };
 
-    window.startScanner = function(targetInputId) {
+    window.startScanner = function(targetInputId, preferredCameraId = null) {
+        scannerTargetInputId = targetInputId;
+        isHandlingScan = false;
         openModal('scanner-modal');
+
+        const controlsBar = document.getElementById('scanner-controls');
+        if (controlsBar && !preferredCameraId) controlsBar.style.display = 'none';
 
         const readerContainer = document.getElementById("scanner-reader");
         if (readerContainer) {
-            readerContainer.innerHTML = '<div style="color:#ffffff; text-align:center; padding:50px 10px;"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>ကင်မရာ ဖွင့်နေပါသည်...</div>';
+            readerContainer.innerHTML = '<div style="color:#ffffff; text-align:center; padding:60px 10px;"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>ကင်မရာ ဖွင့်နေပါသည်...</div>';
+        }
+
+        const photoBtn = document.getElementById('scanner-photo-btn');
+        const photoInput = document.getElementById('scanner-photo-input');
+        if (photoBtn && photoInput) {
+            photoBtn.onclick = () => { photoInput.value = ''; photoInput.click(); };
+            photoInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    clearQuaggaLoop();
+                    if (html5QrCode && html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                        html5QrCode.clear();
+                    }
+                    const fileScanner = new Html5Qrcode("scanner-file-temp");
+                    let decoded = null;
+                    try {
+                        decoded = await fileScanner.scanFile(file, false);
+                    } catch (err1) {
+                        if (typeof Quagga !== 'undefined') {
+                            decoded = await new Promise((resolve) => {
+                                const url = URL.createObjectURL(file);
+                                Quagga.decodeSingle({
+                                    src: url,
+                                    numOfWorkers: 0,
+                                    locate: true,
+                                    inputStream: { size: 1280 },
+                                    decoder: { readers: ['ean_reader', 'ean_8_reader', 'code_128_reader', 'code_39_reader', 'upc_reader', 'upc_e_reader'] }
+                                }, (res) => {
+                                    URL.revokeObjectURL(url);
+                                    resolve(res && res.codeResult ? res.codeResult.code : null);
+                                });
+                            });
+                        }
+                    } finally {
+                        try { fileScanner.clear(); } catch {}
+                    }
+                    if (decoded) {
+                        await handleDecodedScanResult(decoded);
+                    } else {
+                        alert("ပုံထဲတွင် Barcode / QR Code မတွေ့ရှိပါ။ ထပ်မံကြိုးစားကြည့်ပါ။");
+                        window.startScanner(targetInputId, preferredCameraId);
+                    }
+                } catch (err) {
+                    alert("Scan ဖတ်ရာတွင် အမှားရှိနေပါသည်။");
+                }
+            };
         }
 
         setTimeout(async () => {
             try {
+                clearQuaggaLoop();
                 if (html5QrCode) {
                     try {
                         if (html5QrCode.isScanning) await html5QrCode.stop();
@@ -3535,56 +3770,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     formats = Object.values(window.Html5QrcodeSupportedFormats);
                 }
 
-                const config = {
-                    verbose: false
+                const ctorConfig = {
+                    verbose: false,
+                    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
                 };
-                if (formats && formats.length > 0) {
-                    config.formatsToSupport = formats;
-                }
+                if (formats && formats.length > 0) ctorConfig.formatsToSupport = formats;
 
-                html5QrCode = new Html5Qrcode("scanner-reader", config);
+                html5QrCode = new Html5Qrcode("scanner-reader", ctorConfig);
 
                 const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
-                    const width = Math.floor(viewfinderWidth * 0.85);
-                    const height = Math.floor(Math.min(viewfinderHeight * 0.55, 180));
+                    const width = Math.floor(viewfinderWidth * 0.88);
+                    const height = Math.floor(Math.min(viewfinderHeight * 0.52, 180));
                     return {
-                        width: Math.max(width, 240),
-                        height: Math.max(height, 120)
+                        width: Math.max(200, width),
+                        height: Math.max(110, height)
                     };
                 };
 
-                const scanConfig = {
+                const scanConfigHD = {
                     fps: 15,
                     qrbox: qrboxFunction,
-                    disableFlip: false
+                    disableFlip: false,
+                    videoConstraints: preferredCameraId
+                        ? { deviceId: { exact: preferredCameraId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+                        : { facingMode: "environment", width: { min: 640, ideal: 1920 }, height: { min: 480, ideal: 1080 } }
                 };
 
-                await html5QrCode.start(
-                    { facingMode: "environment" },
-                    scanConfig,
-                    (decodedText) => {
-                        window.stopScanner();
+                const cameraTarget = preferredCameraId || { facingMode: "environment" };
 
-                        const targetEl = document.getElementById(targetInputId);
-                        if (targetEl) {
-                            targetEl.value = decodedText;
-                            targetEl.dispatchEvent(new Event('input'));
-                        }
+                try {
+                    await html5QrCode.start(
+                        cameraTarget,
+                        scanConfigHD,
+                        (decodedText) => handleDecodedScanResult(decodedText),
+                        () => {}
+                    );
+                } catch (hdErr) {
+                    await html5QrCode.start(
+                        cameraTarget,
+                        { fps: 12, qrbox: qrboxFunction, disableFlip: false },
+                        (decodedText) => handleDecodedScanResult(decodedText),
+                        () => {}
+                    );
+                }
 
-                        if (targetInputId === 'product-search') {
-                            findProductByBarcodeAndAdd(decodedText, true);
-                        } else if (targetInputId === 'rtc-offer-scan') {
-                            document.getElementById('rtc-remote-sdp').value = decodedText;
-                            acceptRtcOfferAndCreateAnswer(decodedText);
-                        } else if (targetInputId === 'rtc-answer-scan') {
-                            document.getElementById('rtc-remote-sdp').value = decodedText;
-                            acceptRtcAnswerOnServer(decodedText);
-                        }
-                    },
-                    (errorMessage) => {
-                        // scanning frame မတွေ့သေးသည့် သာမန် log များ
-                    }
-                );
+                setupScannerTrackControls();
+                if (!preferredCameraId) populateScannerCameras();
+                startQuaggaFallbackLoop(targetInputId);
             } catch (err) {
                 console.error("Camera Open Error:", err);
                 alert("ကင်မရာဖွင့်၍ မရပါ။ ကျေးဇူးပြု၍ Browser Settings တွင် Camera Permission ခွင့်ပြုပေးထားခြင်း ရှိမရှိ စစ်ဆေးပါ။");

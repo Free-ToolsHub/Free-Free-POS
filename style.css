@@ -1230,18 +1230,32 @@ body.dark-mode .barcode-scan-btn { color: #18191A; }
 #scanner-modal { z-index: 2000 !important; }
 #scanner-reader {
   width: 100% !important;
-  min-height: 280px !important;
-  background-color: #000000 !important;
+  min-height: 240px;
+  background-color: #000000;
   border-radius: var(--border-radius);
   overflow: hidden;
   position: relative;
 }
-#scanner-modal video {
+#scanner-reader video {
   width: 100% !important;
-  height: 100% !important;
-  object-fit: cover;
+  height: auto !important;
+  max-height: 340px;
   border-radius: var(--border-radius);
 }
+.scanner-controls-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.scanner-ios-tip {
+  margin: 8px 0 0 0;
+  font-size: 0.76rem;
+  color: var(--text-color);
+  text-align: center;
+}
+
 #ad-popup-modal .akm-modal-dialog {
   max-width: 460px;
   overflow: hidden;
