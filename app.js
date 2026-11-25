@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isHandlingScan = false;
     let currentScannerZoom = 1;
     let currentScannerTorch = false;
+    let quaggaLoadPromise = null;
     let bluetoothDevice = null;
     let bluetoothCharacteristic = null;
     
@@ -1308,6 +1309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         renderTodoPage();
     };
+
 
     async function renderProductsPage() { 
         const searchInput = document.getElementById('products-search-input');
@@ -3494,7 +3496,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setupImageUploadListeners();
     }
-    
+
+    function ensureQuaggaLoaded() {
+        if (typeof Quagga !== 'undefined') return Promise.resolve(true);
+        if (quaggaLoadPromise) return quaggaLoadPromise;
+        quaggaLoadPromise = new Promise((resolve) => {
+            if (!navigator.onLine) { resolve(false); return; }
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js';
+            s.async = true;
+            s.onload = () => resolve(typeof Quagga !== 'undefined');
+            s.onerror = () => resolve(false);
+            document.head.appendChild(s);
+        });
+        return quaggaLoadPromise;
+    }
+
     function clearQuaggaLoop() {
         if (quaggaTimer) {
             clearInterval(quaggaTimer);
@@ -3526,10 +3543,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function startQuaggaFallbackLoop(targetInputId) {
+    async function startQuaggaFallbackLoop(targetInputId) {
         clearQuaggaLoop();
-        if (typeof Quagga === 'undefined') return;
         if (targetInputId === 'rtc-offer-scan' || targetInputId === 'rtc-answer-scan') return;
+        const loaded = await ensureQuaggaLoaded();
+        if (!loaded || typeof Quagga === 'undefined') return;
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -3615,52 +3633,59 @@ document.addEventListener('DOMContentLoaded', () => {
             track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
         }
 
-        if (caps.zoom && caps.zoom.max > 1) {
-            hasControl = true;
-            currentScannerZoom = 1;
-            zoomBtn.style.display = 'inline-flex';
-            zoomBtn.querySelector('span').textContent = '2x';
-            zoomBtn.onclick = async () => {
-                try {
-                    const targetZoom = currentScannerZoom === 1 ? Math.min(2, caps.zoom.max) : 1;
-                    await track.applyConstraints({ advanced: [{ zoom: targetZoom }] });
-                    currentScannerZoom = targetZoom;
-                    zoomBtn.querySelector('span').textContent = targetZoom === 1 ? '2x' : '1x';
-                } catch (e) { console.warn('Zoom failed:', e); }
-            };
-        } else {
-            zoomBtn.style.display = 'none';
+        if (zoomBtn) {
+            if (caps.zoom && caps.zoom.max > 1) {
+                hasControl = true;
+                currentScannerZoom = 1;
+                zoomBtn.style.display = 'inline-flex';
+                const spanEl = zoomBtn.querySelector('span');
+                if (spanEl) spanEl.textContent = '2x';
+                zoomBtn.onclick = async () => {
+                    try {
+                        const targetZoom = currentScannerZoom === 1 ? Math.min(2, caps.zoom.max) : 1;
+                        await track.applyConstraints({ advanced: [{ zoom: targetZoom }] });
+                        currentScannerZoom = targetZoom;
+                        if (spanEl) spanEl.textContent = targetZoom === 1 ? '2x' : '1x';
+                    } catch (e) { console.warn('Zoom failed:', e); }
+                };
+            } else {
+                zoomBtn.style.display = 'none';
+            }
         }
 
-        if (caps.torch) {
-            hasControl = true;
-            currentScannerTorch = false;
-            torchBtn.style.display = 'inline-flex';
-            torchBtn.onclick = async () => {
-                try {
-                    currentScannerTorch = !currentScannerTorch;
-                    await track.applyConstraints({ advanced: [{ torch: currentScannerTorch }] });
-                    torchBtn.classList.toggle('akmbtn-warning', currentScannerTorch);
-                    torchBtn.classList.toggle('akmbtn-outline-primary', !currentScannerTorch);
-                } catch (e) { console.warn('Torch failed:', e); }
-            };
-        } else {
-            torchBtn.style.display = 'none';
+        if (torchBtn) {
+            if (caps.torch) {
+                hasControl = true;
+                currentScannerTorch = false;
+                torchBtn.style.display = 'inline-flex';
+                torchBtn.onclick = async () => {
+                    try {
+                        currentScannerTorch = !currentScannerTorch;
+                        await track.applyConstraints({ advanced: [{ torch: currentScannerTorch }] });
+                        torchBtn.classList.toggle('akmbtn-warning', currentScannerTorch);
+                        torchBtn.classList.toggle('akmbtn-outline-primary', !currentScannerTorch);
+                    } catch (e) { console.warn('Torch failed:', e); }
+                };
+            } else {
+                torchBtn.style.display = 'none';
+            }
         }
 
         if (hasControl && controlsBar) controlsBar.style.display = 'flex';
     }
 
-    async function populateScannerCameras(activeCameraId = null) {
+    async function populateScannerBackCameras(activeCameraId = null) {
         const select = document.getElementById('scanner-camera-select');
         const controlsBar = document.getElementById('scanner-controls');
         if (!select || typeof Html5Qrcode === 'undefined') return;
 
         try {
             const devices = await Html5Qrcode.getCameras();
-            if (devices && devices.length > 1) {
-                select.innerHTML = devices.map((d, idx) =>
-                    `<option value="${d.id}" ${d.id === activeCameraId ? 'selected' : ''}>${d.label || 'Camera ' + (idx + 1)}</option>`
+            // Back Camera များကိုသာ စစ်ထုတ်ပြသခြင်း (Front Camera များကို ဖယ်ထုတ်မည်)
+            const backCameras = (devices || []).filter(d => !/front|user|facetime|truedepth/i.test(d.label || ''));
+            if (backCameras.length > 1) {
+                select.innerHTML = backCameras.map((d, idx) =>
+                    `<option value="${d.id}" ${d.id === activeCameraId ? 'selected' : ''}>${d.label || 'Back Camera ' + (idx + 1)}</option>`
                 ).join('');
                 select.style.display = 'block';
                 if (controlsBar) controlsBar.style.display = 'flex';
@@ -3699,7 +3724,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const readerContainer = document.getElementById("scanner-reader");
         if (readerContainer) {
-            readerContainer.innerHTML = '<div style="color:#ffffff; text-align:center; padding:60px 10px;"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>ကင်မရာ ဖွင့်နေပါသည်...</div>';
+            readerContainer.innerHTML = '<div style="color:#ffffff; text-align:center; padding:60px 10px;"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Back Camera ဖွင့်နေပါသည်...</div>';
         }
 
         const photoBtn = document.getElementById('scanner-photo-btn');
@@ -3715,12 +3740,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         await html5QrCode.stop();
                         html5QrCode.clear();
                     }
-                    const fileScanner = new Html5Qrcode("scanner-file-temp");
+                    const fileTargetId = document.getElementById('scanner-file-temp') ? 'scanner-file-temp' : 'scanner-reader';
+                    const fileScanner = new Html5Qrcode(fileTargetId);
                     let decoded = null;
                     try {
                         decoded = await fileScanner.scanFile(file, false);
                     } catch (err1) {
-                        if (typeof Quagga !== 'undefined') {
+                        const loaded = await ensureQuaggaLoaded();
+                        if (loaded && typeof Quagga !== 'undefined') {
                             decoded = await new Promise((resolve) => {
                                 const url = URL.createObjectURL(file);
                                 Quagga.decodeSingle({
@@ -3779,47 +3806,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 html5QrCode = new Html5Qrcode("scanner-reader", ctorConfig);
 
                 const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
-                    const width = Math.floor(viewfinderWidth * 0.88);
-                    const height = Math.floor(Math.min(viewfinderHeight * 0.52, 180));
+                    const w = Math.max(180, Math.floor(viewfinderWidth * 0.88));
+                    const h = Math.max(100, Math.floor(Math.min(viewfinderHeight * 0.52, 180)));
                     return {
-                        width: Math.max(200, width),
-                        height: Math.max(110, height)
+                        width: Math.min(w, Math.max(120, viewfinderWidth - 10)),
+                        height: Math.min(h, Math.max(80, viewfinderHeight - 10))
                     };
                 };
 
-                const scanConfigHD = {
+                // iOS နှင့် Android တွင် Back Camera (environment) ကိုသာ HD Resolution ဖြင့် တိုက်ရိုက်ဖွင့်ခြင်း
+                const scanConfigExactBackHD = {
                     fps: 15,
                     qrbox: qrboxFunction,
                     disableFlip: false,
                     videoConstraints: preferredCameraId
                         ? { deviceId: { exact: preferredCameraId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-                        : { facingMode: "environment", width: { min: 640, ideal: 1920 }, height: { min: 480, ideal: 1080 } }
+                        : { facingMode: { exact: "environment" }, width: { min: 640, ideal: 1920 }, height: { min: 480, ideal: 1080 } }
                 };
 
-                const cameraTarget = preferredCameraId || { facingMode: "environment" };
+                const cameraTargetExact = preferredCameraId || { facingMode: { exact: "environment" } };
+                const cameraTargetFallback = preferredCameraId || { facingMode: "environment" };
 
                 try {
                     await html5QrCode.start(
-                        cameraTarget,
-                        scanConfigHD,
+                        cameraTargetExact,
+                        scanConfigExactBackHD,
                         (decodedText) => handleDecodedScanResult(decodedText),
                         () => {}
                     );
-                } catch (hdErr) {
-                    await html5QrCode.start(
-                        cameraTarget,
-                        { fps: 12, qrbox: qrboxFunction, disableFlip: false },
-                        (decodedText) => handleDecodedScanResult(decodedText),
-                        () => {}
-                    );
+                } catch (errExact) {
+                    try {
+                        await html5QrCode.start(
+                            cameraTargetFallback,
+                            {
+                                fps: 15,
+                                qrbox: qrboxFunction,
+                                disableFlip: false,
+                                videoConstraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+                            },
+                            (decodedText) => handleDecodedScanResult(decodedText),
+                            () => {}
+                        );
+                    } catch (errHd) {
+                        await html5QrCode.start(
+                            cameraTargetFallback,
+                            { fps: 12, qrbox: qrboxFunction, disableFlip: false },
+                            (decodedText) => handleDecodedScanResult(decodedText),
+                            () => {}
+                        );
+                    }
                 }
 
                 setupScannerTrackControls();
-                if (!preferredCameraId) populateScannerCameras();
+                if (!preferredCameraId) populateScannerBackCameras();
                 startQuaggaFallbackLoop(targetInputId);
             } catch (err) {
                 console.error("Camera Open Error:", err);
-                alert("ကင်မရာဖွင့်၍ မရပါ။ ကျေးဇူးပြု၍ Browser Settings တွင် Camera Permission ခွင့်ပြုပေးထားခြင်း ရှိမရှိ စစ်ဆေးပါ။");
+                alert("Back Camera ဖွင့်၍ မရပါ။ ကျေးဇူးပြု၍ Browser Settings တွင် Camera Permission ခွင့်ပြုပေးထားခြင်း ရှိမရှိ စစ်ဆေးပါ။");
                 closeModal('scanner-modal');
             }
         }, 300);
